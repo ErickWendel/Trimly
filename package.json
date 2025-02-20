@@ -1,0 +1,20 @@
+{
+  "name": "barber-scheduler",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "dev": "browser-sync -w . -s .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "erickwendel",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "browser-sync": "^3.0.3"
+  },
+  "engines": {
+    "node": "v22.13.1"
+  },
+  "type": "module"
+}
