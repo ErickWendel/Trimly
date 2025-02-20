@@ -1,3 +1,5 @@
+import Service from "./service.js";
+
 const language = 'pt-BR';
 
 const getVoices = () =>
@@ -75,11 +77,15 @@ class SpeechToText {
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const s = new SpeechToText();
+const speechToTextInstance = new SpeechToText();
+
+const context = await (await fetch('/prompts/initialContext.md')).text()
+const intentPrompt = (await (await fetch('/prompts/identifyIntents.md')).text())
+    .replaceAll('{{today}}', new Date().toString())
 
 const session = await window.ai.languageModel.create({
-    systemPrompt: "Pretend to be an fancy receptionist.",
-    expectedInputLanguages: ["pt"],
+    systemPrompt: context.concat('\n', intentPrompt),
+    expectedInputLanguages: ["en"],
 });
 
 const ptBrToEnTranslator = await ai.translator.create({
@@ -92,15 +98,69 @@ const enToPtBrTranslator = await ai.translator.create({
     targetLanguage: "pt",
 });
 
-console.log('session', await self.ai.languageModel.capabilities());
+
+function pipe(session) {
+    let shouldClone = false
+    return {
+        async run({ context, text }) {
+            const sessionObj = shouldClone ? await session.clone() : session;
+            shouldClone = true
+            const translatedText = await ptBrToEnTranslator.translate(text);
+            const aiResponse = await sessionObj.prompt(translatedText);
+            const item = JSON.parse(aiResponse.replaceAll('`', '').replaceAll('json', ''))
+
+            item.datetime = eval(item.datetime)
+
+            return item
+        }
+    }
+
+}
+
+// console.log('session', await self.ai.languageModel.capabilities());
+const service = new Service()
+
+const p = pipe(session)
+
+
+
+// {
+//     const question = `Tenho algum agendamento no barbeiro?`
+//     const item = await p.run({ context: intentPrompt, text: question });;
+//         console.log('item', item);
+// }
+{
+    const question = `O João está disponível segunda-feira às 10?`;
+    const item = await p.run({ context: intentPrompt, text: question });
+    console.log(question, item);
+    const res = await service.getAgenda(item)
+    console.log('res', question, res.chosen, res.all[0]);
+
+}
+
+// {
+//     const question = `Tem horario disponível amanhã as 09`
+//     const item = await p.run({ context: intentPrompt, text: question });;
+//     //     console.log('item', item);
+// }
+
+// {
+//     const question = `O luciano tem horario disponível quinta-feira as 7 da noite`
+//     const item = await p.run({ context: intentPrompt, text: question });;
+//     //     console.log('item', item);
+//     //     const res = await service.getAgenda(item)
+//     //     console.log('res', res);
+// }
+
+
 
 document.getElementById('record').addEventListener('click', async () => {
 
-    s.start();
+    speechToTextInstance.start();
 
     await sleep(2000)
     console.time('speechToText');
-    const ptBrText = await s.stop();
+    const ptBrText = await speechToTextInstance.stop();
     console.log('Recognized text:', ptBrText);
 
 
