@@ -94,6 +94,7 @@ const initialContext = await (await fetch('/prompts/initialContext.md')).text()
 const intentPrompt = (await (await fetch('/prompts/identifyIntents.md')).text())
     .replaceAll('{{today}}', new Date().toString())
 const schedulerPrompt = (await (await fetch('/prompts/scheduler.md')).text())
+const schedulerConfirmationPrompt = (await (await fetch('/prompts/schedulerConfirmation.md')).text())
 
 const session = await ai.languageModel.create({
     systemPrompt: initialContext.concat('\n', intentPrompt),
@@ -116,7 +117,8 @@ const translators = {
 }
 
 function sanitizeJsonResponse(text) {
-    return JSON.parse(text.replaceAll('`', '').replaceAll('json', ''));
+    const json = text.replaceAll('json', '').replaceAll('`', '')
+    return JSON.parse(json);
 }
 
 async function translateAndPrompt({ text, shouldClone = false, toLanguage = 'pt' }) {
@@ -170,7 +172,30 @@ const service = new Service()
 
     const aiResponse = await session.prompt(prompt)
     const translatedAiResponse = await enToPtBrTranslator.translate(aiResponse);
-    console.log('translatedAiResponse', translatedAiResponse);
+    // console.log('translatedAiResponse', translatedAiResponse);
+
+
+    // const answer = `Não, que tal na quarta-feira as 10?`
+    const answer = `Sim, pode agendar!`
+    const translatedText2 = await ptBrToEnTranslator.translate(answer);
+
+    const confirmation = schedulerConfirmationPrompt
+        .replaceAll(`{{today}}`, new Date().toString())
+        .replaceAll(`{{question}}`, translatedText)
+        .replaceAll(`{{input}}`, translatedText2)
+
+    const aiResponse2 = await session.prompt(confirmation)
+    const response = sanitizeJsonResponse(aiResponse2)
+    console.log('response', response);
+    if (response.canSchedule) {
+        console.log('Agendamento confirmado!');
+        // return
+    }
+    else {
+
+        console.log('Agendamento cancelado!');
+    }
+
 }
 
 // {
