@@ -41,7 +41,8 @@ export default class Service {
         // Return the schedule as a Date object
         return {
             chosen,
-            all
+            // todo: return the closest available time to the chosen one
+            otherTime: all[0]
         }
     }
 }

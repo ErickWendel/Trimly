@@ -1,6 +1,17 @@
 import Service from "./service.js";
 
 const language = 'pt-BR';
+const feats = [
+    'speechSynthesis',
+    'webkitSpeechRecognition',
+    'fetch',
+    'ai'
+]
+if (!feats.every(feat => feat in window)) {
+    const msg = `Missing features browser features: ${feats.filter(feat => !(feat in window)).join(', ')}`
+    alert(msg);
+    throw new Error(msg);
+}
 
 const getVoices = () =>
     new Promise((resolve) => {
@@ -79,12 +90,13 @@ class SpeechToText {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const speechToTextInstance = new SpeechToText();
 
-const context = await (await fetch('/prompts/initialContext.md')).text()
+const initialContext = await (await fetch('/prompts/initialContext.md')).text()
 const intentPrompt = (await (await fetch('/prompts/identifyIntents.md')).text())
     .replaceAll('{{today}}', new Date().toString())
+const schedulerPrompt = (await (await fetch('/prompts/scheduler.md')).text())
 
-const session = await window.ai.languageModel.create({
-    systemPrompt: context.concat('\n', intentPrompt),
+const session = await ai.languageModel.create({
+    systemPrompt: initialContext.concat('\n', intentPrompt),
     expectedInputLanguages: ["en"],
 });
 
@@ -98,56 +110,79 @@ const enToPtBrTranslator = await ai.translator.create({
     targetLanguage: "pt",
 });
 
+const translators = {
+    'en': enToPtBrTranslator,
+    'pt': ptBrToEnTranslator
+}
 
-function pipe(session) {
-    let shouldClone = false
-    return {
-        async run({ context, text }) {
-            const sessionObj = shouldClone ? await session.clone() : session;
-            shouldClone = true
-            const translatedText = await ptBrToEnTranslator.translate(text);
-            const aiResponse = await sessionObj.prompt(translatedText);
-            const item = JSON.parse(aiResponse.replaceAll('`', '').replaceAll('json', ''))
+function sanitizeJsonResponse(text) {
+    return JSON.parse(text.replaceAll('`', '').replaceAll('json', ''));
+}
 
-            item.datetime = eval(item.datetime)
-
-            return item
-        }
+async function translateAndPrompt({ text, shouldClone = false, toLanguage = 'pt' }) {
+    const sessionObj = shouldClone ? await session.clone() : session;
+    if (toLanguage === 'pt') {
+        const translatedText = await translators[toLanguage].translate(text);
+        const aiResponse = await sessionObj.prompt(translatedText);
+        return { aiResponse, translatedText };
     }
 
+    const aiResponse = await sessionObj.prompt(text);
+    const translatedText = await translators[toLanguage].translate(aiResponse);
+
+    return { aiResponse: translatedText };
+
+}
+
+async function run({ text, shouldClone = false }) {
+    const { aiResponse, translatedText } = await translateAndPrompt({ text, shouldClone });
+    const item = sanitizeJsonResponse(aiResponse)
+    item.datetime = new Date(item.datetime)
+
+    return { item, translatedText };
 }
 
 // console.log('session', await self.ai.languageModel.capabilities());
 const service = new Service()
 
-const p = pipe(session)
-
-
 
 // {
 //     const question = `Tenho algum agendamento no barbeiro?`
-//     const item = await p.run({ context: intentPrompt, text: question });;
+//     const item = await run({ context: intentPrompt, text: question });;
 //         console.log('item', item);
 // }
 {
     const question = `O João está disponível segunda-feira às 10?`;
-    const item = await p.run({ context: intentPrompt, text: question });
-    console.log(question, item);
+    const { item, translatedText } = await run({
+        text: question
+    });
+    // console.log(question, item);
     const res = await service.getAgenda(item)
-    console.log('res', question, res.chosen, res.all[0]);
+    const schedulerData = JSON.stringify({
+        question: translatedText,
+        available: !!res.chosen,
+        otherTime: res.otherTime,
+    })
 
+    const prompt = schedulerPrompt
+        .replaceAll('{{data}}', schedulerData)
+        .replaceAll('{{question}}', translatedText)
+
+    const aiResponse = await session.prompt(prompt)
+    const translatedAiResponse = await enToPtBrTranslator.translate(aiResponse);
+    console.log('translatedAiResponse', translatedAiResponse);
 }
 
 // {
 //     const question = `Tem horario disponível amanhã as 09`
-//     const item = await p.run({ context: intentPrompt, text: question });;
-//     //     console.log('item', item);
+//     const item = await run({ context: intentPrompt, text: intentPrompt.concat('\n', question), shouldClone: true });;
+//     console.log(question, item);
 // }
 
 // {
 //     const question = `O luciano tem horario disponível quinta-feira as 7 da noite`
-//     const item = await p.run({ context: intentPrompt, text: question });;
-//     //     console.log('item', item);
+//     const item = await run({ context: intentPrompt, text: intentPrompt.concat('\n', question), shouldClone: true });;
+//     console.log(question, item);
 //     //     const res = await service.getAgenda(item)
 //     //     console.log('res', res);
 // }
@@ -183,3 +218,6 @@ document.getElementById('record').addEventListener('click', async () => {
     session.destroy();
 
 });
+
+
+
