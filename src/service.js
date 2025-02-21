@@ -40,6 +40,7 @@ export default class Service {
         const chosen = all.find(item => item.datetime.toISOString() === datetime.toISOString())
         // Return the schedule as a Date object
         return {
+            professional: professionalId ? this.professionals.find(p => p.id === professionalId).name : null,
             chosen,
             // todo: return the closest available time to the chosen one
             otherTime: all[0]

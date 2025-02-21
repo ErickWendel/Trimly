@@ -164,15 +164,18 @@ const service = new Service()
         question: translatedText,
         available: !!res.chosen,
         otherTime: res.otherTime,
+        professional: res.professional,
     })
+    console.log('barber', res.professional)
 
     const prompt = schedulerPrompt
         .replaceAll('{{data}}', schedulerData)
         .replaceAll('{{question}}', translatedText)
+        .replaceAll('{{professional}}', res.professional)
 
     const aiResponse = await session.prompt(prompt)
     const translatedAiResponse = await enToPtBrTranslator.translate(aiResponse);
-    // console.log('translatedAiResponse', translatedAiResponse);
+    console.log('translatedAiResponse', translatedAiResponse);
 
 
     // const answer = `Não, que tal na quarta-feira as 10?`
@@ -216,33 +219,60 @@ const service = new Service()
 
 document.getElementById('record').addEventListener('click', async () => {
 
-    speechToTextInstance.start();
+    const question = await captureSpeechInput();
+    console.log('question', question);
+    const { item, translatedText } = await run({
+        text: question
+    });
+    // console.log(question, item);
+    const res = await service.getAgenda(item)
+    const schedulerData = JSON.stringify({
+        question: translatedText,
+        available: !!res.chosen,
+        otherTime: res.otherTime,
+    })
+    console.log('barber', res.otherTime.professionals[0].name)
+    const prompt = schedulerPrompt
+        .replaceAll('{{data}}', schedulerData)
+        .replaceAll('{{question}}', translatedText)
+        .replaceAll('{{professional}}', res.otherTime.professionals[0].name)
 
-    await sleep(2000)
-    console.time('speechToText');
-    const ptBrText = await speechToTextInstance.stop();
-    console.log('Recognized text:', ptBrText);
+    const aiResponse = await session.prompt(prompt)
+    const translatedAiResponse = await enToPtBrTranslator.translate(aiResponse);
+    console.log('translatedAiResponse', translatedAiResponse);
 
+    await textToSpeech(translatedAiResponse);
 
-    const text = await ptBrToEnTranslator.translate(ptBrText);
-    console.log('Translated text:', text);
+    // const answer = `Não, que tal na quarta-feira as 10?`
+    const answer = await captureSpeechInput()
+    const translatedText2 = await ptBrToEnTranslator.translate(answer);
+    console.log('translatedText2', translatedText2);
 
-    const cost = await session.countPromptTokens(text);
-    console.log('cost:', cost);
+    const confirmation = schedulerConfirmationPrompt
+        .replaceAll(`{{today}}`, new Date().toString())
+        .replaceAll(`{{question}}`, translatedText)
+        .replaceAll(`{{input}}`, translatedText2)
 
-    const aiResponse = await session.prompt(text)
-    console.log('aiResponse', aiResponse);
-
-    const backToPtBr = await enToPtBrTranslator.translate(aiResponse);
-    console.log('backToPtBr', backToPtBr);
-    // const stream = await session.promptStreaming(text);
-    console.timeEnd('speechToText');
-
-    await textToSpeech(backToPtBr);
-
-    session.destroy();
+    const aiResponse2 = await session.prompt(confirmation)
+    const response = sanitizeJsonResponse(aiResponse2)
+    console.log('response', response);
+    if (response.canSchedule) {
+        await textToSpeech('Agendamento confirmado!');
+    }
+    else {
+        await textToSpeech('Agendamento cancelado!');
+    }
 
 });
 
 
+
+async function captureSpeechInput(ms = 3000) {
+    speechToTextInstance.start();
+
+    await sleep(ms);
+    console.time('speechToText');
+    const ptBrText = await speechToTextInstance.stop();
+    return ptBrText;
+}
 
