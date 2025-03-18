@@ -153,53 +153,53 @@ const service = new Service()
 //     const item = await run({ context: intentPrompt, text: question });;
 //         console.log('item', item);
 // }
-// {
-//     const question = `O João está disponível segunda-feira às 10?`;
-//     const { item, translatedText } = await run({
-//         text: question
-//     });
-//     // console.log(question, item);
-//     const res = await service.getAgenda(item)
-//     const schedulerData = JSON.stringify({
-//         question: translatedText,
-//         available: !!res.chosen,
-//         otherTime: res.otherTime,
-//         professional: res.professional,
-//     })
-//     console.log('barber', res.professional)
+{
+    const question = `O João está disponível segunda-feira às 10?`;
+    const { item, translatedText } = await run({
+        text: question
+    });
+    // console.log(question, item);
+    const res = await service.getAgenda(item)
+    const schedulerData = JSON.stringify({
+        question: translatedText,
+        available: !!res.chosen,
+        otherTime: res.otherTime,
+        professional: res.professional,
+    })
+    console.log('barber', res.professional)
 
-//     const prompt = schedulerPrompt
-//         .replaceAll('{{data}}', schedulerData)
-//         .replaceAll('{{question}}', translatedText)
-//         .replaceAll('{{professional}}', res.professional)
+    const prompt = schedulerPrompt
+        .replaceAll('{{data}}', schedulerData)
+        .replaceAll('{{question}}', translatedText)
+        .replaceAll('{{professional}}', res.professional)
 
-//     const aiResponse = await session.prompt(prompt)
-//     const translatedAiResponse = await enToPtBrTranslator.translate(aiResponse);
-//     console.log('translatedAiResponse', translatedAiResponse);
+    const aiResponse = await session.prompt(prompt)
+    const translatedAiResponse = await enToPtBrTranslator.translate(aiResponse);
+    console.log('translatedAiResponse', translatedAiResponse);
 
 
-//     // const answer = `Não, que tal na quarta-feira as 10?`
-//     const answer = `Sim, pode agendar!`
-//     const translatedText2 = await ptBrToEnTranslator.translate(answer);
+    // const answer = `Não, que tal na quarta-feira as 10?`
+    const answer = `Sim, pode agendar!`
+    const translatedText2 = await ptBrToEnTranslator.translate(answer);
 
-//     const confirmation = schedulerConfirmationPrompt
-//         .replaceAll(`{{today}}`, new Date().toString())
-//         .replaceAll(`{{question}}`, translatedText)
-//         .replaceAll(`{{input}}`, translatedText2)
+    const confirmation = schedulerConfirmationPrompt
+        .replaceAll(`{{today}}`, new Date().toString())
+        .replaceAll(`{{question}}`, translatedText)
+        .replaceAll(`{{input}}`, translatedText2)
 
-//     const aiResponse2 = await session.prompt(confirmation)
-//     const response = sanitizeJsonResponse(aiResponse2)
-//     console.log('response', response);
-//     if (response.canSchedule) {
-//         console.log('Agendamento confirmado!');
-//         // return
-//     }
-//     else {
+    const aiResponse2 = await session.prompt(confirmation)
+    const response = sanitizeJsonResponse(aiResponse2)
+    console.log('response', response);
+    if (response.canSchedule) {
+        console.log('Agendamento confirmado!');
+        // return
+    }
+    else {
 
-//         console.log('Agendamento cancelado!');
-//     }
+        console.log('Agendamento cancelado!');
+    }
 
-// }
+}
 
 // {
 //     const question = `Tem horario disponível amanhã as 09`

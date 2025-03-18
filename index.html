@@ -18,56 +18,7 @@
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
-  <style>
-    #controls {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 15px;
-      border-radius: 8px;
-      z-index: 1000;
-      color: white;
-    }
-
-    select,
-    button {
-      margin: 5px;
-      padding: 8px;
-      border-radius: 4px;
-    }
-
-    /* Loading Screen */
-    #loading-screen {
-      position: fixed;
-      inset: 0;
-      background: #222;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-
-    .loading-text {
-      color: #fff;
-      font-size: 24px;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% {
-        opacity: 0.5;
-      }
-
-      50% {
-        opacity: 1;
-      }
-
-      100% {
-        opacity: 0.5;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -77,10 +28,49 @@
   </div>
    -->
   <div id="controls">
-    <select id="animationSelect">
-      <option value="">Select Animation</option>
-    </select>
-    <button id="playAnimation">Play</button>
+    <div class="controls-header">
+      <span class="controls-title">Controls</span>
+    </div>
+    <div class="controls-content">
+      <div class="control-group">
+        <label for="animationSelect">Animation:</label>
+        <select id="animationSelect" class="control-input">
+          <option value="">Select Animation</option>
+        </select>
+        <button id="playAnimation" class="control-button">Play</button>
+      </div>
+      
+      <div class="control-group control-row">
+        <div class="control-col">
+          <label for="languageSelect">Language:</label>
+          <select id="languageSelect" class="control-input"></select>
+        </div>
+        <div class="control-col">
+          <label for="voiceSelect">Voice:</label>
+          <select id="voiceSelect" class="control-input"></select>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">API Status</div>
+        <div id="apiStatus" class="api-status-grid">
+          <div class="api-status" id="ttsStatus">Text-to-Speech</div>
+          <div class="api-status" id="sttStatus">Speech-to-Text</div>
+          <div class="api-status" id="promptStatus">Prompt API</div>
+          <div class="api-status" id="translatorStatus">Translator</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Keyboard Controls</div>
+        <ul class="keyboard-controls">
+          <li><span class="key">WASD / Arrow Keys</span> Move around</li>
+          <li><span class="key">Mouse</span> Look around</li>
+          <li><span class="key">Enter</span> Hold to talk to AI</li>
+          <li><span class="key">1-8</span> Trigger different animations</li>
+        </ul>
+      </div>
+    </div>
   </div>
 
   <a-scene vr-mode-ui="enabled: true">
@@ -114,7 +104,7 @@
     <a-entity id="tv" position="-3.778 1.875 -5.506" rotation="0 0 0" scale="1 1 1" gltf-model="#tv-model">
     </a-entity>
 
-    <a-text value="The wrap-count value of 30 is a reasonable default that should work well with your text width, but you can adjust this number if you want the text to wrap at a different point. A lower number will cause more frequent wrapping, while a higher number will allow longer lines." 
+    <a-text value="Searching for the truth..." 
     font="https://cdn.aframe.io/fonts/mozillavr.fnt" 
     color='#FFFFFF' 
     width='3.9'
