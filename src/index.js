@@ -6,28 +6,6 @@ import { SPEECH_EVENTS } from './services/speech/constants.js';
 
 AFRAME.registerComponent('character-animation-controller', characterAnimationController);
 
-// Get references to DOM elements
-const animationSelect = document.getElementById('animationSelect');
-const playButton = document.getElementById('playAnimation');
-const initialContext = await (await fetch('/prompts/initialContext.md')).text()
-const intentPrompt = (await (await fetch('/prompts/identifyIntents.md')).text())
-    .replaceAll('{{today}}', new Date().toString())
-const schedulerPrompt = (await (await fetch('/prompts/scheduler.md')).text())
-const schedulerConfirmationPrompt = (await (await fetch('/prompts/schedulerConfirmation.md')).text())
-
-const promptService = new PromptService({
-    initialContext: initialContext,
-    intentPrompt: intentPrompt
-});
-await promptService.init()
-
-
-const translatedText = await TranslatorService.translate({
-    text: 'Olá, como vai você',
-    toLanguage: 'en',
-    fromLanguage: 'pt'
-});
-console.log('translatedText', translatedText)
 
 // Listen for speech recognition results
 window.addEventListener(SPEECH_EVENTS.SPEECH_RECOGNIZED, async (event) => {
@@ -54,7 +32,6 @@ window.addEventListener(SPEECH_EVENTS.SPEECH_RECOGNIZED, async (event) => {
     // Example: Echo the transcript back using text-to-speech
     // await speechManager.speak(transcript);
 });
-
 // Wait for the model to be loaded
 document.querySelector('#model').addEventListener('model-loaded', (event) => {
     const model = event.target.getObject3D('mesh');
@@ -74,6 +51,7 @@ document.querySelector('#model').addEventListener('model-loaded', (event) => {
     });
 });
 
+
 const onChange = () => {
     const selectedAnimation = animationSelect.value;
     if (selectedAnimation) {
@@ -85,6 +63,29 @@ const onChange = () => {
         }));
     }
 }
+
+// Get references to DOM elements
+const animationSelect = document.getElementById('animationSelect');
+const playButton = document.getElementById('playAnimation');
+const initialContext = await (await fetch('/prompts/initialContext.md')).text()
+const intentPrompt = (await (await fetch('/prompts/identifyIntents.md')).text())
+    .replaceAll('{{today}}', new Date().toString())
+const schedulerPrompt = (await (await fetch('/prompts/scheduler.md')).text())
+const schedulerConfirmationPrompt = (await (await fetch('/prompts/schedulerConfirmation.md')).text())
+
+const promptService = new PromptService({
+    initialContext: initialContext,
+    intentPrompt: intentPrompt
+});
+await promptService.init()
+
+
+const translatedText = await TranslatorService.translate({
+    text: 'Olá, como vai você',
+    toLanguage: 'en',
+    fromLanguage: 'pt'
+});
+console.log('translatedText', translatedText)
 
 // Handle play button click
 animationSelect.addEventListener('change', onChange);
