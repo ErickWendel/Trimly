@@ -154,6 +154,11 @@ export class SpeechManager {
     const languageCode = this.#getSelectedLanguageCode();
     return this.#synthesisService.speak(text, voice, languageCode);
   }
+
+  getSelectedLanguageCode() {
+    return this.#getSelectedLanguageCode();
+  }
+  
 }
 
 // Export a singleton instance
