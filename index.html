@@ -15,9 +15,8 @@
   <script>
     if (!isSecureContext) location.protocol = "https:";
   </script>
-  <!-- Import Three.js explicitly -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r132/three.min.js"></script>
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
   <style>
     #controls {
@@ -56,9 +55,17 @@
     }
 
     @keyframes pulse {
-      0% { opacity: 0.5; }
-      50% { opacity: 1; }
-      100% { opacity: 0.5; }
+      0% {
+        opacity: 0.5;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.5;
+      }
     }
   </style>
 </head>
@@ -81,7 +88,7 @@
       <!-- Keep the model path as is since that's where it's located -->
       <a-asset-item id="skeleton-model" src="3d/skeleton.glb"></a-asset-item>
       <a-asset-item id="cemetery-model" src="3d/cemetery.glb"></a-asset-item>
-      <a-asset-item id="alphabet-model" src="3d/alphabet.glb"></a-asset-item>
+      <a-asset-item id="tv-model" src="3d/tv.glb"></a-asset-item>
     </a-assets>
 
     <!-- Environment -->
@@ -92,29 +99,33 @@
     <a-light type="directional" position="1 1 1" intensity="0.6"></a-light>
 
     <!-- Camera -->
-    <a-entity >
+    <a-entity>
       <a-camera look-controls wasd-controls></a-camera>
     </a-entity>
 
-    <!-- 3D Model -->
-    <a-entity 
-      id="model" 
-      position="0 0.449 -3" 
-      rotation="0 0 0" 
-      scale="1 1 1"
-      gltf-model="#skeleton-model"
+    <a-entity id="cemetery" position="0 0.174 -8.259" rotation="0 -77.043 0" scale="1 1 1" gltf-model="#cemetery-model">
+    </a-entity>
 
+    <!-- 3D Model -->
+    <a-entity id="model" position="0 0.449 -3" rotation="0 0 0" scale="1 1 1" gltf-model="#skeleton-model"
       character-animation-controller>
     </a-entity>
-    <a-entity 
-      id="model" 
-      position="0 0.174 -8.259" 
-      rotation="0 -77.043 0" 
-      scale="1 1 1"
-      gltf-model="#cemetery-model">
+    
+    <a-entity id="tv" position="-3.778 1.875 -5.506" rotation="0 0 0" scale="1 1 1" gltf-model="#tv-model">
     </a-entity>
+
+    <a-text value="The wrap-count value of 30 is a reasonable default that should work well with your text width, but you can adjust this number if you want the text to wrap at a different point. A lower number will cause more frequent wrapping, while a higher number will allow longer lines." 
+    font="https://cdn.aframe.io/fonts/mozillavr.fnt" 
+    color='#FFFFFF' 
+    width='3.9'
+    wrap-count="40"
+    align="left" 
+    position="-5.825 2.641 -5.075">
+    </a-text>
+
   </a-scene>
 
+  
   <script src="src/index.js" type="module"></script>
 </body>
 
