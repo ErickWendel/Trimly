@@ -64,10 +64,12 @@
       <div class="section">
         <div class="section-title">Keyboard Controls</div>
         <ul class="keyboard-controls">
-          <li><span class="key">WASD / Arrow Keys</span> Move around</li>
+          <li><span class="key">W</span> Move forward</li>
+          <li><span class="key">S</span> Move backward</li>
+          <li><span class="key">A</span> Move left</li>
+          <li><span class="key">D</span> Move right</li>
           <li><span class="key">Mouse</span> Look around</li>
           <li><span class="key">Enter</span> Hold to talk to AI</li>
-          <li><span class="key">1-8</span> Trigger different animations</li>
         </ul>
       </div>
     </div>
@@ -89,8 +91,8 @@
     <a-light type="directional" position="1 1 1" intensity="0.6"></a-light>
 
     <!-- Camera -->
-    <a-entity>
-      <a-camera look-controls wasd-controls></a-camera>
+    <a-entity id="rig">
+      <a-camera id="camera" look-controls wasd-controls="enabled: false"></a-camera>
     </a-entity>
 
     <a-entity id="cemetery" position="0 0.174 -8.259" rotation="0 -77.043 0" scale="1 1 1" gltf-model="#cemetery-model">
@@ -98,7 +100,19 @@
 
     <!-- 3D Model -->
     <a-entity id="model" position="0 0.449 -3" rotation="0 0 0" scale="1 1 1" gltf-model="#skeleton-model"
-      character-animation-controller>
+      character-animation-controller="
+        idleAnimation: Idle_B;
+        walkingAnimation: Walking_A;
+        walkingBackwardsAnimation: Walking_Backwards;
+        walkingLeftAnimation: Left_Strafe;
+        walkingRightAnimation: Right_Strafe;
+        movementSpeed: 0.1;
+        maxZ: 5;
+        minZ: -5;
+        maxX: 5;
+        minX: -5;
+        cameraHeight: 1.6;
+        cameraDistance: 2">
     </a-entity>
     
     <a-entity id="tv" position="-3.778 1.875 -5.506" rotation="0 0 0" scale="1 1 1" gltf-model="#tv-model">
