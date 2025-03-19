@@ -22,10 +22,12 @@ export default class PromptService {
         const json = text.replaceAll('json', '').replaceAll('`', '')
         try {
             const item = JSON.parse(json);
+            console.log('item', item)
             if(item.datetime) { item.datetime = new Date(item.datetime) }
             return item;
         } catch (error) {
-            return json;
+            console.log('error', error)
+            return json;    
         }
     }
 }   

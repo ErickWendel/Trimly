@@ -6,19 +6,20 @@ import { SPEECH_EVENTS } from './services/constants.js';
 import { APIStatusChecker } from './services/APIStatusChecker.js';
 AFRAME.registerComponent('character-animation-controller', characterAnimationController);
 
-
-// Listen for speech recognition results
-window.addEventListener(SPEECH_EVENTS.SPEECH_RECOGNIZED, async (event) => {
-    const { transcript } = event.detail;
-    console.log('Processing speech:', transcript);
+async function understandSpeech(transcript) {
+    console.log('transcript', transcript)
     const languageCode = speechManager.getSelectedLanguageCode().toLowerCase();
+    console.log('languageCode', languageCode)
+    
+    // Add current date to the transcript
+    const currentDate = new Date().toISOString();
+    const transcriptWithDate = `Today is ${currentDate}.\n\nUser: ${transcript}`;
+    
     if (languageCode === 'en-us') {
-        const response = await promptService.prompt(transcript);
+        const response = await promptService.prompt(transcriptWithDate);
         console.log('Response:', response);
-        await speechManager.speak(transcript);
-        return;
+        return response;
     }
-
 
     const translatedText = await TranslatorService.translate({
         text: transcript,
@@ -26,11 +27,16 @@ window.addEventListener(SPEECH_EVENTS.SPEECH_RECOGNIZED, async (event) => {
         fromLanguage: languageCode
     });
     console.log('Translated text:', translatedText);
-    // Here you can add your logic to handle the speech input
-    // For example, sending it to your AI processing pipeline
+    const response = await promptService.prompt(transcriptWithDate.replace(transcript, translatedText));
+    console.log('Response:', response);
+    return response;
+}
 
-    // Example: Echo the transcript back using text-to-speech
-    // await speechManager.speak(transcript);
+// Listen for speech recognition results
+window.addEventListener(SPEECH_EVENTS.SPEECH_RECOGNIZED, async (event) => {
+    const { transcript } = event.detail;
+    console.log('Processing speech:', transcript);
+    await understandSpeech(transcript);
 });
 // Wait for the model to be loaded
 document.querySelector('#model').addEventListener('model-loaded', (event) => {
@@ -65,39 +71,51 @@ const onChange = () => {
 }
 
 
-// Get references to DOM elements
 const animationSelect = document.getElementById('animationSelect');
 const playButton = document.getElementById('playAnimation');
 const textElement = document.querySelector('#screenText');
 
+animationSelect.addEventListener('change', onChange);
+playButton.addEventListener('click', onChange);
 // Check API availability
-(async () => {
-    await logAvailability(APIStatusChecker.checkAvailability());
-})();
+logAvailability(APIStatusChecker.checkAvailability());
+
 
 const initialContext = await (await fetch('/prompts/initialContext.md')).text()
 const intentPrompt = (await (await fetch('/prompts/identifyIntents.md')).text())
-    .replaceAll('{{today}}', new Date().toString())
+    .replaceAll('{{today}}', new Date().toISOString())
 const schedulerPrompt = (await (await fetch('/prompts/scheduler.md')).text())
 const schedulerConfirmationPrompt = (await (await fetch('/prompts/schedulerConfirmation.md')).text())
-
 
 const promptService = new PromptService({
     initialContext: initialContext,
     intentPrompt: intentPrompt
 });
+
 await promptService.init()
 
-const translatedText = await TranslatorService.translate({
-    text: 'Olá, como vai você',
-    toLanguage: 'en',
-    fromLanguage: 'pt'
-});
-console.log('translatedText', translatedText)
+{
+    // Test different date scenarios
+    const scenarios = [
+        // 'will Luciano be available on 20th of march at 10am?',
+        'is Luciano available for the next friday at 9am?',
+        // 'book me with João tomorrow at 2pm',
+        // 'what is Kauan\'s next availability?'
+    ];
 
-// Handle play button click
-animationSelect.addEventListener('change', onChange);
-playButton.addEventListener('click', onChange);
+    for (const transcript of scenarios) {
+        understandSpeech(transcript)
+    }
+}
+
+// const translatedText = await TranslatorService.translate({
+//     text: 'Olá, como vai você',
+//     toLanguage: 'en',
+//     fromLanguage: 'pt'
+// });
+// console.log('translatedText', translatedText)
+
+
 
 async function logAvailability(apis) {
     for (const [key, value] of Object.entries(apis)) {
