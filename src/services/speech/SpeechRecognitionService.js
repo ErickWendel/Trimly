@@ -1,4 +1,4 @@
-import { SPEECH_EVENTS } from './constants.js';
+import { SPEECH_EVENTS } from '../constants.js';
 
 export class SpeechRecognitionService {
   #recognition;

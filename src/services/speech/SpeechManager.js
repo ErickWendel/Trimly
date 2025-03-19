@@ -1,7 +1,6 @@
-import { APIStatusChecker } from './APIStatusChecker.js';
 import { SpeechRecognitionService } from './SpeechRecognitionService.js';
 import { SpeechSynthesisService } from './SpeechSynthesisService.js';
-import { SPEECH_EVENTS } from './constants.js';
+import { SPEECH_EVENTS } from '../constants.js';
 
 export class SpeechManager {
   #recognitionService;
@@ -29,7 +28,6 @@ export class SpeechManager {
   #initializeServices() {
     this.#recognitionService = new SpeechRecognitionService();
     this.#synthesisService = new SpeechSynthesisService();
-    APIStatusChecker.checkAvailability();
 
     // Initialize language select when voices are available
     this.#initializeLanguageSelect();
