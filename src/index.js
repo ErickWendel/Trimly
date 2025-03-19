@@ -1,14 +1,19 @@
 import { loadPrompts } from './config/prompts.js';
 import { AnimationController } from './components/animation/AnimationController.js';
 import { ModelLoader } from './components/animation/ModelLoader.js';
-import { SpeechRecognitionHandler } from './services/speech/SpeechRecognitionHandler.js';
-import { SchedulerService } from './services/scheduler/SchedulerService.js';
 import { APIChecker } from './utils/APIChecker.js';
 import { TextUpdater } from './utils/TextUpdater.js';
 import { APIStatusChecker } from './services/APIStatusChecker.js';
 import Service from './services/service.js';
 import PromptService from './services/ai/PromptService.js';
 import characterAnimationController from './components/characterAnimationController.js';
+import { BarberService } from './services/barberService.js';
+import { SPEECH_EVENTS } from './services/constants.js';
+import { BarberController } from './controllers/barberController.js';
+import SpeechManager from './services/speech/SpeechManager.js';
+import TranslatorService from './services/ai/TranslatorService.js';
+import SpeechSynthesisService from './services/speech/SpeechSynthesisService.js';
+import SpeechRecognitionService from './services/speech/SpeechRecognitionService.js';
 
 async function initializeApp() {
     // Register A-Frame component
@@ -16,83 +21,78 @@ async function initializeApp() {
     // Setup API checking
     const apiChecker = new APIChecker();
     apiChecker.checkAndLogAvailability(APIStatusChecker.checkAvailability());
-    // Initialize services
-    const service = new Service();
+
+    const speechManager = new SpeechManager({
+        speechSynthesisService: new SpeechSynthesisService(),
+        speechRecognitionService: new SpeechRecognitionService(),
+    });
+    const barberService = new BarberService()
+    const translatorService = new TranslatorService();
     const prompts = await loadPrompts();
+    prompts.intentPrompt = prompts.intentPrompt
+    .replaceAll('{{professionals}}', JSON.stringify(await barberService.getProfessionals()));   
     const promptService = new PromptService(prompts);
     await promptService.init();
 
     // Initialize UI components
-    const textUpdater = new TextUpdater();
+    const logElement = new TextUpdater();
+    const agendaElement = new TextUpdater({ textElement: '#agendaText', tvElement: '#tv-agenda' });
+
+    const barberController = new BarberController({
+        promptService,
+        barberService,
+        speechManager,
+        translatorService,
+        schedulerPrompt: prompts.schedulerPrompt,
+    });
+
+    const appointments = await barberService.getAppointments()
+    const barber = await barberService.getProfessionals()
+    agendaElement.toggleVisibility();
+    setTimeout(() => {
+        agendaElement.toggleVisibility();
+        if (appointments.length > 0) {
+            agendaElement.updateText('Your agenda:', false);
+            appointments.forEach(appointment => {
+                agendaElement.updateText(`- ${appointment.datetime} - ${appointment.professional}`, true);
+            });
+        }
+        else {
+            agendaElement.updateText('No appointments scheduled for you.\n', false);
+            agendaElement.updateText('You can schedule one now with one of the following professionals:', true);
+            barber.forEach(professional => {
+                agendaElement.updateText(`- ${professional.name}`, true);
+            });
+        }
+    }, 6000);
+
+
+
     const animationController = new AnimationController();
     const modelLoader = new ModelLoader(animationController.animationSelect);
-
-    // Initialize speech and scheduler services
-    const speechHandler = new SpeechRecognitionHandler(promptService);
-    const schedulerService = new SchedulerService(service, prompts.schedulerPrompt);
-
-    // Setup speech recognition
-    speechHandler.setupEventListener();
-
-    // Run test scenarios
-    // await runTestScenarios(speechHandler, schedulerService, textUpdater, prompts);
+    
+    window.addEventListener(SPEECH_EVENTS.SPEECH_RECOGNIZED,
+        async (event) => {
+            const { transcript } = event.detail;
+            console.log('Processing speech:', transcript);
+            await barberController.initConversation(transcript);
+        });
+    
+    runTestScenarios(barberController)
 }
 
-async function runTestScenarios(speechHandler, schedulerService, textUpdater, prompts) {
+
+ function runTestScenarios() {
     const scenarios = [
         'will Luciano be available on 20th of march at 11am?'
     ];
-
-    const requests = {
-        availability: async (text, question) => {
-            const prompt = await schedulerService.handleAvailabilityRequest(text, question);
-            const intent = await speechHandler.understandSpeech(prompt);
-            console.log('availability', intent);
-            return intent;
-        },
-        check: 'check',
-        cancel: async (intent, question) => {
-            console.log('cancelling', intent);
-            return 'ok';
-        },
-        giveup: async (intent, question) => {
-            console.log('giveup', intent);
-            return 'ok';
-        },
-        schedule: async (intent, question) => {
-            console.log('scheduling for', intent);
-            return 'ok';
-        },
-        change: 'change'
-    };
-
+    window.addEventListener('INTENT-availability', (event) => {
+        console.log('availability', event.detail.intent);
+        window.dispatchEvent(new CustomEvent(SPEECH_EVENTS.SPEECH_RECOGNIZED, { detail: { transcript: `yes, sure!` } }));   
+    }); 
+    
     for (const transcript of scenarios) {
-        const intent = await speechHandler.understandSpeech(transcript);
-        await textUpdater.updateText(`Intent is [${intent.request}]`, true);
-        console.log('intent', intent);
-
-        const result = await requests[intent.request](intent, transcript);
-        console.log('result', result);
-
-        // scheduler confirmation
-        {
-            const otherIntent = await speechHandler.understandSpeech(`sure!`);
-            const confirmation = await requests[otherIntent.request](otherIntent, transcript);
-            console.log('confirmation', confirmation);
-        }
-        {
-            // const otherIntent = await speechHandler.understandSpeech(
-            //     prompts.intentPrompt.concat(`\nUser: no thanks, what about tomorrow at 11am?`)
-            // );
-            // if(otherIntent?.request) {
-            //     const confirmation = await requests[otherIntent.request](otherIntent, transcript);
-            //     console.log('confirmation', confirmation);
-            // }
-            // const otherIntent2 = await speechHandler.understandSpeech(prompts.intentPrompt.concat(`\nUser: no!`));
-            // debugger;
-
-        }
-
+        window.dispatchEvent(new CustomEvent(SPEECH_EVENTS.SPEECH_RECOGNIZED, { detail: { transcript } }    ));   
     }
 }
 

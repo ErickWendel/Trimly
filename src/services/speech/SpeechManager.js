@@ -1,15 +1,15 @@
-import { SpeechRecognitionService } from './SpeechRecognitionService.js';
-import { SpeechSynthesisService } from './SpeechSynthesisService.js';
-import { SPEECH_EVENTS } from '../constants.js';
 
-export class SpeechManager {
-  #recognitionService;
-  #synthesisService;
+export default class SpeechManager {
+  #speechSynthesisService;
+  #speechRecognitionService;
   #languageSelect;
   #voiceSelect;
   #controlsPanel;
 
-  constructor() {
+  constructor({ speechSynthesisService, speechRecognitionService }) {
+    this.#speechSynthesisService = speechSynthesisService;
+    this.#speechRecognitionService = speechRecognitionService;
+
     this.#initializeElements();
     this.#initializeServices();
     this.#setupEventListeners();
@@ -26,9 +26,6 @@ export class SpeechManager {
   }
 
   #initializeServices() {
-    this.#recognitionService = new SpeechRecognitionService();
-    this.#synthesisService = new SpeechSynthesisService();
-
     // Initialize language select when voices are available
     this.#initializeLanguageSelect();
   }
@@ -36,7 +33,7 @@ export class SpeechManager {
   #initializeLanguageSelect() {
     // Get user's browser language
     const userLanguage = navigator.language.split('-')[0];
-    const languages = this.#synthesisService.getLanguages();
+    const languages = this.#speechSynthesisService.getLanguages();
 
     this.#languageSelect.innerHTML = '';
     languages.sort().forEach(lang => {
@@ -78,13 +75,13 @@ export class SpeechManager {
 
     // Speech recognition keyboard controls
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' && !this.#recognitionService.isRecording) {
+      if (event.key === 'Enter' && !this.#speechRecognitionService.isRecording) {
         this.#startRecording();
       }
     });
 
     document.addEventListener('keyup', (event) => {
-      if (event.key === 'Enter' && this.#recognitionService.isRecording) {
+      if (event.key === 'Enter' && this.#speechRecognitionService.isRecording) {
         this.#stopRecording();
       }
     });
@@ -100,7 +97,7 @@ export class SpeechManager {
 
   #updateVoiceList() {
     const selectedLang = this.#languageSelect.value;
-    const voices = this.#synthesisService.getVoicesForLanguage(selectedLang);
+    const voices = this.#speechSynthesisService.getVoicesForLanguage(selectedLang);
     
     this.#voiceSelect.innerHTML = '';
     voices.forEach(voice => {
@@ -116,16 +113,16 @@ export class SpeechManager {
     }
 
     // Update recognition language
-    this.#recognitionService.setLanguage(this.#getSelectedLanguageCode());
+    this.#speechRecognitionService.setLanguage(this.#getSelectedLanguageCode());
   }
 
   #startRecording() {
-    this.#recognitionService.setLanguage(this.#getSelectedLanguageCode());
-    this.#recognitionService.startRecording();
+    this.#speechRecognitionService.setLanguage(this.#getSelectedLanguageCode());
+    this.#speechRecognitionService.startRecording();
   }
 
   #stopRecording() {
-    this.#recognitionService.stopRecording();
+    this.#speechRecognitionService.stopRecording();
   }
 
   #toggleControlsPanel() {
@@ -143,14 +140,14 @@ export class SpeechManager {
 
   #getSelectedLanguageCode() {
     const selectedLang = this.#languageSelect.value;
-    const voice = this.#synthesisService.getVoicesForLanguage(selectedLang)[0];
+    const voice = this.#speechSynthesisService.getVoicesForLanguage(selectedLang)[0];
     return voice ? voice.lang : `${selectedLang}-${selectedLang.toUpperCase()}`;
   }
 
   async speak(text) {
-    const voice = this.#synthesisService.getVoiceByName(this.#voiceSelect.value);
+    const voice = this.#speechSynthesisService.getVoiceByName(this.#voiceSelect.value);
     const languageCode = this.#getSelectedLanguageCode();
-    return this.#synthesisService.speak(text, voice, languageCode);
+    return this.#speechSynthesisService.speak(text, voice, languageCode);
   }
 
   getSelectedLanguageCode() {
@@ -158,6 +155,3 @@ export class SpeechManager {
   }
   
 }
-
-// Export a singleton instance
-export const speechManager = new SpeechManager(); 

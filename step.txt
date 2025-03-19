@@ -3,3 +3,12 @@ https://poly.pizza/m/kr72KKiunY
 https://poly.pizza/m/eauUqGZWR0O
 
 https://poly.pizza/m/cQ6pt8VHR7G
+
+
+/*
+* Mock data for the barber service
+starts at 9:00 (540 minutes), skips lunch from 12:00 to 13:00, and ends at 17:30 (so they finish by 18:00). 
+All three professionals are available in each 30-minute slot, and service_time remains 40
+
+The schedule property is the minutes since midnight, so 540 is 9:00, 600 is 10:00, 630 is 10:30, etc.
+*/

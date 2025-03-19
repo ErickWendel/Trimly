@@ -1,4 +1,4 @@
-export class SpeechSynthesisService {
+export default class SpeechSynthesisService {
   #synthesis;
   #voices = [];
   #languages = new Set();
@@ -52,13 +52,13 @@ export class SpeechSynthesisService {
       this.#synthesis.cancel();
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const utterance = new SpeechSynthesisUtterance(text);
       if (voice) utterance.voice = voice;
       if (languageCode) utterance.lang = languageCode;
       
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
+      utterance.onend = resolve;
+      utterance.onerror = reject;
       
       this.#synthesis.speak(utterance);
     });

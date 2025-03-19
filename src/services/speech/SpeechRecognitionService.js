@@ -1,6 +1,6 @@
 import { SPEECH_EVENTS } from '../constants.js';
 
-export class SpeechRecognitionService {
+export default class SpeechRecognitionService {
   #recognition;
   #isRecording = false;
   #currentLanguage = '';

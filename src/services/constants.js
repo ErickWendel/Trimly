@@ -14,3 +14,13 @@ export const SPEECH_CONFIG = Object.freeze({
   INTERIM_RESULTS: false,
   MAX_ALTERNATIVES: 5
 }); 
+
+export const INTENTS = Object.freeze({
+  AVAILABILITY: 'availability',
+  CHECK: 'check',
+  CANCEL: 'cancel',
+  GIVEUP: 'giveup',
+  SCHEDULE: 'schedule',
+  UNKNOWN: 'unknown',
+  CHANGE: 'change'
+});   

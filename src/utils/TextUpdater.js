@@ -1,12 +1,19 @@
 export class TextUpdater {
-    constructor(selector = '#screenText') {
-        this.textElement = document.querySelector(selector);
+    constructor({ textElement, tvElement } = { textElement: '#screenText', tvElement: '#tv' }) {
+        this.textElement = document.querySelector(textElement);
+        this.tvElement = document.querySelector(tvElement);
+
         this.messageQueue = [];
         this.isProcessing = false;
         const [x, y, z] = this.textElement.attributes.position.value.split(' ').map(Number);
         this.initialPosition = { x, y, z };
         this.currentPosition = { x, y, z };
     }
+
+    toggleVisibility() {
+        this.tvElement.setAttribute('visible', !this.tvElement.getAttribute('visible'));
+        this.textElement.setAttribute('visible', !this.textElement.getAttribute('visible'));
+    } 
 
     async updateText(text, shouldConcat = false) {
         // Add message to queue
