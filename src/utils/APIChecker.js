@@ -43,7 +43,11 @@ export class APIChecker {
     async showWelcomeMessage() {
         await this.textUpdater.updateText('Hold enter to talk to AI...', false);
         await this.textUpdater.updateText(
-            '\nYou may also choose the language you want \nto use as well as the voice you wanna hear \nin the controls menu.',
+            '\nYou may also choose the language you want to use as well as the voice you wanna hear in the controls menu.',
+            true
+        );
+        await this.textUpdater.updateText(
+            '\nYou can also move the character around using the WASD keys.',
             true
         );
     }

@@ -13,7 +13,9 @@ import characterAnimationController from './components/characterAnimationControl
 async function initializeApp() {
     // Register A-Frame component
     AFRAME.registerComponent('character-animation-controller', characterAnimationController);
-
+    // Setup API checking
+    const apiChecker = new APIChecker();
+    apiChecker.checkAndLogAvailability(APIStatusChecker.checkAvailability());
     // Initialize services
     const service = new Service();
     const prompts = await loadPrompts();
@@ -29,18 +31,14 @@ async function initializeApp() {
     const speechHandler = new SpeechRecognitionHandler(promptService);
     const schedulerService = new SchedulerService(service, prompts.schedulerPrompt);
 
-    // Setup API checking
-    const apiChecker = new APIChecker();
-    apiChecker.checkAndLogAvailability(APIStatusChecker.checkAvailability());
-
     // Setup speech recognition
     speechHandler.setupEventListener();
 
     // Run test scenarios
-    await runTestScenarios(speechHandler, schedulerService, textUpdater, prompts);
+    // await runTestScenarios(speechHandler, schedulerService, textUpdater, prompts);
 }
 
-async function runTestScenarios(speechHandler, schedulerService, textUpdater ,prompts) {
+async function runTestScenarios(speechHandler, schedulerService, textUpdater, prompts) {
     const scenarios = [
         'will Luciano be available on 20th of march at 11am?'
     ];
@@ -80,7 +78,7 @@ async function runTestScenarios(speechHandler, schedulerService, textUpdater ,pr
         {
             const otherIntent = await speechHandler.understandSpeech(`sure!`);
             const confirmation = await requests[otherIntent.request](otherIntent, transcript);
-            console.log('confirmation', confirmation);  
+            console.log('confirmation', confirmation);
         }
         {
             // const otherIntent = await speechHandler.understandSpeech(
@@ -92,7 +90,7 @@ async function runTestScenarios(speechHandler, schedulerService, textUpdater ,pr
             // }
             // const otherIntent2 = await speechHandler.understandSpeech(prompts.intentPrompt.concat(`\nUser: no!`));
             // debugger;
-            
+
         }
 
     }
