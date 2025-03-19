@@ -4,20 +4,23 @@ import TranslatorService from './services/ai/TranslatorService.js';
 import { speechManager } from './services/speech/SpeechManager.js';
 import { SPEECH_EVENTS } from './services/constants.js';
 import { APIStatusChecker } from './services/APIStatusChecker.js';
+import Service from './services/service.js';
+
+const service = new Service()
 AFRAME.registerComponent('character-animation-controller', characterAnimationController);
 
 async function understandSpeech(transcript) {
-    console.log('transcript', transcript)
+    // await updateTextContent(`processing text...\n${transcript}`, true)
     const languageCode = speechManager.getSelectedLanguageCode().toLowerCase();
-    console.log('languageCode', languageCode)
-    
+
+    // await updateTextContent(`Language set to${languageCode}...`, true)
+
     // Add current date to the transcript
     const currentDate = new Date().toISOString();
     const transcriptWithDate = `Today is ${currentDate}.\n\nUser: ${transcript}`;
-    
+
     if (languageCode === 'en-us') {
         const response = await promptService.prompt(transcriptWithDate);
-        console.log('Response:', response);
         return response;
     }
 
@@ -28,7 +31,7 @@ async function understandSpeech(transcript) {
     });
     console.log('Translated text:', translatedText);
     const response = await promptService.prompt(transcriptWithDate.replace(transcript, translatedText));
-    console.log('Response:', response);
+
     return response;
 }
 
@@ -97,15 +100,54 @@ await promptService.init()
 {
     // Test different date scenarios
     const scenarios = [
-        // 'will Luciano be available on 20th of march at 10am?',
-        'is Luciano available for the next friday at 9am?',
+        'will Luciano be available on 20th of march at 11am?',
+        // 'is Luciano available for the next friday at 9am?',
         // 'book me with João tomorrow at 2pm',
         // 'what is Kauan\'s next availability?'
     ];
+    const requests = {
+        availability: async (text, question) => {
+            const res = await service.getAgenda(text)
+            const schedulerData = JSON.stringify({
+                question,
+                available: !!res.chosen,
+                otherTime: res.otherTime,
+                professional: res.professional,
+            })
+            console.log('barber', res, res.professional)
+
+            const prompt = schedulerPrompt
+                .replaceAll('{{data}}', schedulerData)
+                .replaceAll('{{question}}', question)
+                .replaceAll('{{professional}}', res.professional)
+
+            const result = await understandSpeech(prompt)
+            return result
+        },
+        check: 'check',
+        cancel: 'cancel',
+        schedule: async (intent, question) => {
+            console.log('scheduling for', intent)
+            
+            return intent
+        },
+        change: 'change'
+    }
+
 
     for (const transcript of scenarios) {
-        understandSpeech(transcript)
+        const intent = await understandSpeech(transcript)
+        await updateTextContent(`Intent is [${intent.request}]`, true)
+        console.log('intent', intent)
+
+        const result = await requests[intent.request](intent, transcript)
+        console.log('result', result)
+        const re = await understandSpeech('yes please!');
+        const result2 = await requests[re.request](re, transcript)
+        // console.log('re', re, result2)
+
     }
+
 }
 
 // const translatedText = await TranslatorService.translate({
@@ -119,16 +161,16 @@ await promptService.init()
 
 async function logAvailability(apis) {
     for (const [key, value] of Object.entries(apis)) {
-        if(value) continue;
+        if (value) continue;
         await updateTextContent(`[X] The ${key} API is not available`, true);
     }
-    
-    if(textElement.getAttribute('value')) {
+
+    if (textElement.getAttribute('value')) {
         await updateTextContent('\nTry using Chrome Canary and make sure to enable the experimental features.', true);
         await updateTextContent('\nYou can still move the character around using the WASD keys.', true);
         return;
     }
-    
+
     await updateTextContent('Hold enter to talk to AI...', false);
     await updateTextContent('\nYou may also choose the language you want \nto use as well as the voice you wanna hear \nin the controls menu.', true);
 }
@@ -140,11 +182,11 @@ async function updateTextContent(text, shouldConcat = false) {
 
     const currentValue = textElement.getAttribute('value') || '';
     const baseText = shouldConcat ? `${currentValue}\n` : '';
-    
+
     // Split the text into characters and animate them
     const characters = text.split('');
     let currentText = baseText;
-    
+
     for (const char of characters) {
         currentText += char;
         textElement.setAttribute('value', currentText);
