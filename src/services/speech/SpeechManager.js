@@ -140,8 +140,7 @@ export default class SpeechManager {
 
   #getSelectedLanguageCode() {
     const selectedLang = this.#languageSelect.value;
-    const voice = this.#speechSynthesisService.getVoicesForLanguage(selectedLang)[0];
-    return voice ? voice.lang : `${selectedLang}-${selectedLang.toUpperCase()}`;
+    return selectedLang;
   }
 
   async speak(text) {

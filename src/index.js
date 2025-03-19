@@ -4,7 +4,6 @@ import { ModelLoader } from './components/animation/ModelLoader.js';
 import { APIChecker } from './utils/APIChecker.js';
 import { TextUpdater } from './utils/TextUpdater.js';
 import { APIStatusChecker } from './services/APIStatusChecker.js';
-import Service from './services/service.js';
 import PromptService from './services/ai/PromptService.js';
 import characterAnimationController from './components/characterAnimationController.js';
 import { BarberService } from './services/barberService.js';
@@ -28,6 +27,13 @@ async function initializeApp() {
     });
     const barberService = new BarberService()
     const translatorService = new TranslatorService();
+    // const translatedText = await translatorService.translate({
+    //     text: 'hello world',
+    //     fromLanguage: 'en',
+    //     toLanguage: 'pt '
+    // })
+    // console.log('translatedText', translatedText);
+
     const prompts = await loadPrompts();
     prompts.intentPrompt = prompts.intentPrompt
     .replaceAll('{{professionals}}', JSON.stringify(await barberService.getProfessionals()));   

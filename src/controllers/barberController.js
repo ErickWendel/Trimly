@@ -1,4 +1,4 @@
-import { INTENTS } from '../services/constants.js';
+
 export class BarberController {
     constructor({ promptService, barberService, schedulerPrompt, speechManager, translatorService }) {
         this.promptService = promptService;
@@ -61,7 +61,7 @@ export class BarberController {
         const languageCode = this.speechManager.getSelectedLanguageCode().toLowerCase();
         const transcriptWithDate = this.addCurrentDate(transcript);
 
-        if (languageCode === 'en-us') {
+        if (languageCode === 'en') {
             return this.promptService.prompt(transcriptWithDate);
         }
 
@@ -91,7 +91,7 @@ export class BarberController {
         if(!message) return;
 
         const languageCode = this.speechManager.getSelectedLanguageCode().toLowerCase();
-        if(languageCode === 'en-us') {
+        if(languageCode === 'en') {
             this.speechManager.speak(message);
             return; 
         }
@@ -101,7 +101,6 @@ export class BarberController {
 
 
     async initConversation(transcript) {
-
         const intent = await this.translateAndPrompt(transcript);
         this.speakIfText(intent);
         console.log('intent', intent);

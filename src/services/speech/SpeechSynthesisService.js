@@ -56,7 +56,10 @@ export default class SpeechSynthesisService {
       const utterance = new SpeechSynthesisUtterance(text);
       if (voice) utterance.voice = voice;
       if (languageCode) utterance.lang = languageCode;
-      
+      // utterance.onboundary = (event) => {
+      //   console.log('boundary', event);
+      // }
+
       utterance.onend = resolve;
       utterance.onerror = reject;
       
