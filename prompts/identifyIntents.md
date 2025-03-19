@@ -16,6 +16,9 @@ Follow these rules:
    - "check" - When checking existing appointment
    - "cancel" - When canceling appointment
    - "schedule" - When booking new appointment
+   - "giveup" - If the user input is **negative** (e.g., "No", "I can't", "Not at that time")
+
+
 
 3. **Professional IDs**:
    - João = 609421
