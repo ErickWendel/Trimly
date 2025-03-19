@@ -105,7 +105,7 @@ export class BarberController {
         const intent = await this.translateAndPrompt(transcript);
         this.speakIfText(intent);
         console.log('intent', intent);
-
+        
         await this.intents[intent.request](intent, transcript);
         window.dispatchEvent(new CustomEvent(`INTENT-${intent.request}`, { detail: { intent: intent } }));   
 

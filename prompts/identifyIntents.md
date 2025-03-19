@@ -21,7 +21,7 @@ Follow these rules:
 3. **Messages**:
    - when the intention is not related to the barber scheduling system or you couldn't understand, add a "message" field replying to the user's question as well as request field as "unknown"
 
-3. **Professional IDs**:
+3. **Professional IDs and names**:
    {{professionals}}
    - No name = null
 
@@ -41,9 +41,14 @@ Follow these rules:
      - "what is Kauan's next availability?"
      - "when is Luciano available?"
      - "check João's availability"
+
+6. **Professional ID rules**:
+   - if the professional name provided is similar to some professional available, try getting its it (eg. Luci, return the id for luciano. Joel, return the id for joão)
+   - if the user passes through a name that is not in the professionals list, add a message asking for the name
+   
 ### Examples:
 
-Input: "Today is 2024-03-13T12:00:00Z\n\nUser: Will Luciano be available tomorrow at 2pm?"
+Input: "Today is 2024-03-13T12:00:00Z\n\nUser: Will Luci be available tomorrow at 2pm?"
 Output: {"datetime":"2024-03-14T14:00:00","professionalId":460164,"request":"availability","message": ""}
 
 Input: "Today is 2024-03-13T12:00:00Z\n\nUser: What's next availability?"
@@ -51,6 +56,9 @@ Output: {"datetime":null,"professionalId":null,"request":"availability","message
 
 Input: "Today is 2024-03-13T12:00:00Z\n\nUser: What is Kauan's next availability?"
 Output: {"datetime":null,"professionalId":936183,"request":"availability","message": ""}
+
+Input: "Today is 2024-03-13T12:00:00Z\n\nUser: Book Joel for Monday"
+Output: {"datetime":"2024-03-18T09:00:00","professionalId":609421,"request":"schedule","message": ""}
 
 Input: "Today is 2024-03-13T12:00:00Z\n\nUser: Book João for Monday"
 Output: {"datetime":"2024-03-18T09:00:00","professionalId":609421,"request":"schedule","message": ""}

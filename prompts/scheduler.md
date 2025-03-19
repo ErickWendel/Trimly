@@ -30,14 +30,14 @@ Your job is to understand the user's intent and respond accordingly based on the
 ### Examples:
 1. **When available:**
     ```
-    {{professional}} is available at the requested time. Would you like to schedule now?
+    { "isAIReply": "true", "message": "{{professional}} is available at the requested time. Would you like to schedule now?"}
     ```
 
 2. **When no slots are available:**
     ```
-    There are no available slots on the requested day.
+    { "isAIReply": "true", "message":"There are no available slots on the requested day."}
     ```
 
 ### Final Instruction:
 
-**respond the question {{question}} as human-readable string with no JSON or Markdown formatting.**
+**respond the question {{question}} as a valid JSON and without Markdown formatting.**

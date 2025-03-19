@@ -78,7 +78,7 @@ async function initializeApp() {
             await barberController.initConversation(transcript);
         });
     
-    runTestScenarios(barberController)
+    // runTestScenarios(barberController)
 }
 
 
@@ -90,7 +90,7 @@ async function initializeApp() {
         console.log('availability', event.detail.intent);
         window.dispatchEvent(new CustomEvent(SPEECH_EVENTS.SPEECH_RECOGNIZED, { detail: { transcript: `yes, sure!` } }));   
     }); 
-    
+
     for (const transcript of scenarios) {
         window.dispatchEvent(new CustomEvent(SPEECH_EVENTS.SPEECH_RECOGNIZED, { detail: { transcript } }    ));   
     }
