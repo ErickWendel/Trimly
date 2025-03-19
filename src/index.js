@@ -107,6 +107,7 @@ async function logAvailability(apis) {
     
     if(textElement.getAttribute('value')) {
         await updateTextContent('\nTry using Chrome Canary and make sure to enable the experimental features.', true);
+        await updateTextContent('\nYou can still move the character around using the WASD keys.', true);
         return;
     }
     
