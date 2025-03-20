@@ -38,7 +38,8 @@ export class BarberService {
         const storedData = localStorage.getItem(key);
         
         if (!storedData && fallbackUrl) {
-            const response = await fetch(fallbackUrl);
+            const baseUrl = window.location.href
+            const response = await fetch(`${baseUrl}${fallbackUrl}`);
             const data = await response.json();
             localStorage.setItem(key, JSON.stringify(data));
             return data;

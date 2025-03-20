@@ -17,6 +17,11 @@ import SpeechRecognitionService from './services/speech/SpeechRecognitionService
 async function initializeApp() {
     // Register A-Frame component
     AFRAME.registerComponent('character-animation-controller', characterAnimationController);
+    // Initialize UI components
+    const logElement = new TextUpdater();
+    const agendaElement = new TextUpdater({ textElement: '#agendaText', tvElement: '#tv-agenda' });
+    agendaElement.toggleVisibility();
+    
     // Setup API checking
     const apiChecker = new APIChecker();
     apiChecker.checkAndLogAvailability(APIStatusChecker.checkAvailability());
@@ -28,9 +33,8 @@ async function initializeApp() {
     const barberService = new BarberService()
     const translatorService = new TranslatorService();
 
-    // Initialize UI components
-    const logElement = new TextUpdater();
-    const agendaElement = new TextUpdater({ textElement: '#agendaText', tvElement: '#tv-agenda' });
+    
+
     const prompts = await loadPrompts();
     prompts.intentPrompt = prompts.intentPrompt
         .replaceAll('{{professionals}}', JSON.stringify(await barberService.getProfessionals()));
@@ -48,7 +52,6 @@ async function initializeApp() {
         logger: logElement,
     });
 
-    agendaElement.toggleVisibility();
     setTimeout(() => {
         agendaElement.toggleVisibility();
         reloadAgenda(barberService, agendaElement, speechManager)

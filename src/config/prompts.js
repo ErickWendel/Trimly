@@ -13,6 +13,7 @@ export async function loadPrompts() {
 }
 
 async function fetchPrompt(url) {
-    const response = await fetch(url);
+    const baseUrl = window.location.href
+    const response = await fetch(`${baseUrl}${url}`);
     return response.text();
 } 
