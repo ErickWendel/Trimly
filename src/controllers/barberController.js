@@ -107,7 +107,7 @@ export class BarberController {
     }
 
     async speakIfText(text) {
-        const message = text.message;
+        const message = text?.message;
         if(!message) return;
 
         const languageCode = this.speechManager.getSelectedLanguageCode().toLowerCase();
