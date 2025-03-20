@@ -1,29 +1,42 @@
+// Constants for text display configuration
+const TEXT_CONFIG = {
+    CHAR_DELAY: 20,         // Milliseconds between each character
+    CHARS_PER_LINE: 30,     // Maximum characters per line
+    LINE_HEIGHT: 0.1,       // Height adjustment for each new line
+    MAX_CHARS: 200,         // Maximum total characters before reset
+    INITIAL_DELAY: 0        // Initial delay before starting animation
+};
+
 export class TextUpdater {
     constructor({ textElement, tvElement } = { textElement: '#screenText', tvElement: '#tv' }) {
         this.textElement = document.querySelector(textElement);
         this.tvElement = document.querySelector(tvElement);
-
         this.messageQueue = [];
         this.isProcessing = false;
-        const [x, y, z] = this.textElement.attributes.position.value.split(' ').map(Number);
+        this.initializePosition();
+    }
+
+    initializePosition() {
+        const [x, y, z] = this.textElement.attributes.position.value
+            .split(' ')
+            .map(Number);
         this.initialPosition = { x, y, z };
-        this.currentPosition = { x, y, z };
+        this.currentPosition = { ...this.initialPosition };
     }
 
     toggleVisibility() {
-        this.tvElement.setAttribute('visible', !this.tvElement.getAttribute('visible'));
-        this.textElement.setAttribute('visible', !this.textElement.getAttribute('visible'));
-    } 
+        const toggleAttribute = (element) => {
+            const isVisible = !element.getAttribute('visible');
+            element.setAttribute('visible', isVisible);
+        };
+
+        toggleAttribute(this.tvElement);
+        toggleAttribute(this.textElement);
+    }
 
     async updateText(text, shouldConcat = false) {
-              
-        // Add message to queue
-        this.messageQueue.push({
-            text,
-            shouldConcat
-        });
+        this.messageQueue.push({ text, shouldConcat });
 
-        // Process queue if not already processing
         if (!this.isProcessing) {
             await this.processQueue();
         }
@@ -34,58 +47,72 @@ export class TextUpdater {
             this.isProcessing = false;
             return;
         }
+
         this.isProcessing = true;
         const { text, shouldConcat } = this.messageQueue.shift();
-        let concat = shouldConcat;
-         // Add line count check
-         const currentText = this.textElement.getAttribute('value') || '';
-         const currentLines = currentText.length + currentText.split('\n').length;
-         
-         if (currentLines > 200) {
-            concat = false;
-         }
-
-
-        const currentValue = this.textElement.getAttribute('value') || '';
-        const baseText = concat ? `${currentValue}\n` : '';
-        this.textElement.setAttribute('position', this.keepInThePosition(!concat));
         
-
+        const shouldResetText = this.shouldResetText(shouldConcat);
+        const baseText = this.getBaseText(shouldResetText);
+        
+        this.updateTextPosition(shouldResetText);
         await this.animateText(text, baseText);
-
-        // Process next message in queue
+        
         return this.processQueue();
+    }
+
+    shouldResetText(shouldConcat) {
+        if (!shouldConcat) return true;
+
+        const currentText = this.textElement.getAttribute('value') || '';
+        const totalLength = currentText.length + currentText.split('\n').length;
+        return totalLength > TEXT_CONFIG.MAX_CHARS;
+    }
+
+    getBaseText(shouldReset) {
+        if (shouldReset) return '';
+        const currentValue = this.textElement.getAttribute('value') || '';
+        return `${currentValue}\n`;
+    }
+
+    updateTextPosition(shouldReset) {
+        const position = this.keepInThePosition(shouldReset);
+        this.textElement.setAttribute('position', position);
     }
 
     async animateText(text, baseText) {
         const characters = text.split('');
         let currentText = baseText;
-        let charCount = 0
+        let charCount = 0;
+
         for (const char of characters) {
             currentText += char;
-            
             this.textElement.setAttribute('value', currentText);
-            if (charCount > 30 || char === '\n') {
-                this.textElement.setAttribute('position', this.keepInThePosition());
+
+            if (this.shouldAdjustPosition(char, charCount)) {
+                this.updateTextPosition(false);
                 charCount = 0;
             }
-            charCount += 1;
-            await this.delay(20);
+
+            charCount++;
+            await this.delay(TEXT_CONFIG.CHAR_DELAY);
         }
     }
 
+    shouldAdjustPosition(char, charCount) {
+        return charCount > TEXT_CONFIG.CHARS_PER_LINE || char === '\n';
+    }
+
     keepInThePosition(reset = false) {
-        if (!reset) {
-            this.currentPosition.y -= 0.1;
+        if (reset) {
+            this.currentPosition = { ...this.initialPosition };
             return this.currentPosition;
         }
 
-        this.currentPosition = { ...this.initialPosition };
+        this.currentPosition.y -= TEXT_CONFIG.LINE_HEIGHT;
         return this.currentPosition;
     }
 
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
-
 } 
