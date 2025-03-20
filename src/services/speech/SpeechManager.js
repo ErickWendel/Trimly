@@ -1,3 +1,8 @@
+const STORAGE_KEYS = {
+    CONTROLS_COLLAPSED: 'controlsPanelCollapsed',
+    SELECTED_LANGUAGE: 'selectedLanguage',
+    SELECTED_VOICE: 'selectedVoice'
+};
 
 export default class SpeechManager {
   #speechSynthesisService;
@@ -11,8 +16,9 @@ export default class SpeechManager {
     this.#speechRecognitionService = speechRecognitionService;
 
     this.#initializeElements();
-    this.#initializeServices();
     this.#setupEventListeners();
+    // this.#initializeLanguageSelect();
+
   }
 
   #initializeElements() {
@@ -25,38 +31,36 @@ export default class SpeechManager {
     }
   }
 
-  #initializeServices() {
-    // Initialize language select when voices are available
-    this.#initializeLanguageSelect();
-  }
 
   #initializeLanguageSelect() {
-    // Get user's browser language
-    const userLanguage = navigator.language.split('-')[0];
     const languages = this.#speechSynthesisService.getLanguages();
+    const savedLanguage = localStorage.getItem(STORAGE_KEYS.SELECTED_LANGUAGE);
+    const userLanguage = navigator.language.split('-')[0];
 
     this.#languageSelect.innerHTML = '';
     languages.sort().forEach(lang => {
-      const option = document.createElement('option');
-      option.value = lang;
-      option.textContent = new Intl.DisplayNames(['en'], { type: 'language' }).of(lang);
-      
-      // Set as selected if it matches user's language
-      if (lang === userLanguage) {
-        option.selected = true;
-      }
-      
-      this.#languageSelect.appendChild(option);
+        const option = document.createElement('option');
+        option.value = lang;
+        option.textContent = new Intl.DisplayNames(['en'], { type: 'language' }).of(lang);
+        
+        // Priority: 1. Saved Language, 2. Browser Language, 3. First Available
+        if (savedLanguage && lang === savedLanguage) {
+            option.selected = true;
+        } else if (!savedLanguage && lang === userLanguage) {
+            option.selected = true;
+        }
+        
+        this.#languageSelect.appendChild(option);
     });
+
+    // If no language was selected (neither saved nor browser language matched),
+    // select the first available language
+    if (!this.#languageSelect.value && this.#languageSelect.options.length > 0) {
+        this.#languageSelect.options[0].selected = true;
+    }
 
     // Initial voice list update
     this.#updateVoiceList();
-    
-    // If no language was automatically selected, select the first available language
-    if (!this.#languageSelect.value && this.#languageSelect.options.length > 0) {
-      this.#languageSelect.options[0].selected = true;
-      this.#updateVoiceList();
-    }
   }
 
   #setupEventListeners() {
@@ -91,6 +95,11 @@ export default class SpeechManager {
       this.#initializeLanguageSelect();
     });
 
+    // Add voice selection change listener
+    this.#voiceSelect.addEventListener('change', () => {
+      this.#saveSelections();
+    });
+
     // Restore controls panel state
     this.#restoreControlsPanelState();
   }
@@ -98,22 +107,34 @@ export default class SpeechManager {
   #updateVoiceList() {
     const selectedLang = this.#languageSelect.value;
     const voices = this.#speechSynthesisService.getVoicesForLanguage(selectedLang);
+    const savedVoice = localStorage.getItem(STORAGE_KEYS.SELECTED_VOICE);
     
     this.#voiceSelect.innerHTML = '';
     voices.forEach(voice => {
-      const option = document.createElement('option');
-      option.value = voice.name;
-      option.textContent = `${voice.name} (${voice.lang})`;
-      this.#voiceSelect.appendChild(option);
+        const option = document.createElement('option');
+        option.value = voice.name;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        
+        // Only select saved voice if it matches the current language
+        if (savedVoice === voice.name && voice.lang.startsWith(selectedLang)) {
+            option.selected = true;
+        }
+        this.#voiceSelect.appendChild(option);
     });
 
-    // Select first voice by default if none selected
+    // Select first voice only if no saved voice was found or matched
     if (voices.length > 0 && !this.#voiceSelect.value) {
-      this.#voiceSelect.options[0].selected = true;
+        this.#voiceSelect.options[0].selected = true;
     }
 
     // Update recognition language
     this.#speechRecognitionService.setLanguage(this.#getSelectedLanguageCode());
+
+    // Save selections only if they changed
+    if (this.#languageSelect.value !== localStorage.getItem(STORAGE_KEYS.SELECTED_LANGUAGE) ||
+        this.#voiceSelect.value !== localStorage.getItem(STORAGE_KEYS.SELECTED_VOICE)) {
+        this.#saveSelections();
+    }
   }
 
   #startRecording() {
@@ -127,12 +148,14 @@ export default class SpeechManager {
 
   #toggleControlsPanel() {
     this.#controlsPanel.classList.toggle('collapsed');
-    localStorage.setItem('controlsPanelCollapsed', 
-      this.#controlsPanel.classList.contains('collapsed'));
+    localStorage.setItem(
+      STORAGE_KEYS.CONTROLS_COLLAPSED, 
+      this.#controlsPanel.classList.contains('collapsed')
+    );
   }
 
   #restoreControlsPanelState() {
-    const wasCollapsed = localStorage.getItem('controlsPanelCollapsed') === 'true';
+    const wasCollapsed = localStorage.getItem(STORAGE_KEYS.CONTROLS_COLLAPSED) === 'true';
     if (wasCollapsed) {
       this.#controlsPanel.classList.add('collapsed');
     }
@@ -152,5 +175,9 @@ export default class SpeechManager {
   getSelectedLanguageCode() {
     return this.#getSelectedLanguageCode();
   }
-  
+
+  #saveSelections() {
+    localStorage.setItem(STORAGE_KEYS.SELECTED_LANGUAGE, this.#getSelectedLanguageCode());
+    localStorage.setItem(STORAGE_KEYS.SELECTED_VOICE, this.#voiceSelect.value);
+  }
 }

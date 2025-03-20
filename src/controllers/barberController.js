@@ -30,8 +30,10 @@ export class BarberController {
                 return 'ok';
             },
             schedule: async (intent, question) => {
-                this.logger.updateText(`scheduling...`, true);
-                console.log('scheduling for', intent);
+                this.logger.updateText(`scheduling appointment...`, true);
+                const res = await this.barberService.scheduleAppointment(intent);
+                this.logger.updateText(`appointment scheduled!`, true);
+                this.speakIfText(`the appointment was scheduled, do I help in anything else?`);
                 return 'ok';
             },
             unknown: async (intent, question) => {
@@ -44,23 +46,17 @@ export class BarberController {
     }
 
     async handleAvailabilityRequest(text, question) {
-        const res = await this.barberService.getAgenda(text);
-        const schedulerData = JSON.stringify({
-            question,
-            available: !!res.chosen,
-            otherTime: res.otherTime,
-            professional: res.professional,
-        });
-        
-        const prompt = this.createPrompt(schedulerData, question, res.professional);
+        const schedulerData = await this.barberService.getAgenda(text);
+        this.logger.updateText(`barber ${schedulerData.available ? 'is' : 'is not'} available. Prompting...`, true);
+        const prompt = this.createPrompt(schedulerData, question);
         return prompt;
     }
 
-    createPrompt(schedulerData, question, professional) {
+    createPrompt(schedulerData, question) {
         return this.schedulerPrompt
-            .replaceAll('{{data}}', schedulerData)
+            .replaceAll('{{data}}', JSON.stringify(schedulerData))
             .replaceAll('{{question}}', question)
-            .replaceAll('{{professional}}', professional);
+            .replaceAll('{{professional}}', schedulerData.professional);
     }
 
     async translateAndPrompt(transcript) {
