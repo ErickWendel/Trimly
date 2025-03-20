@@ -41,7 +41,7 @@ export class BarberController {
                     this.logger.updateText(`scheduling appointment...`, true);
                     const res = await this.barberService.scheduleAppointment(intent);
                     this.logger.updateText(`appointment scheduled!`, true);
-                    this.speakIfText({ message: `the appointment was scheduled, do I help in anything else?` });
+                    this.speakIfText(intent);
                     return 'ok';
                 } catch (error) {
                     this.logger.updateText(`error scheduling appointment: ${error.message}`, true);
