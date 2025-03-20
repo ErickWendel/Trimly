@@ -30,11 +30,18 @@ export class BarberController {
                 return 'ok';
             },
             schedule: async (intent, question) => {
-                this.logger.updateText(`scheduling appointment...`, true);
-                const res = await this.barberService.scheduleAppointment(intent);
-                this.logger.updateText(`appointment scheduled!`, true);
-                this.speakIfText(`the appointment was scheduled, do I help in anything else?`);
-                return 'ok';
+                try {
+                    this.logger.updateText(`scheduling appointment...`, true);
+                    const res = await this.barberService.scheduleAppointment(intent);
+                    this.logger.updateText(`appointment scheduled!`, true);
+                    this.speakIfText(`the appointment was scheduled, do I help in anything else?`);
+                    return 'ok';
+                } catch (error) {
+                    this.logger.updateText(`error scheduling appointment: ${error.message}`, true);
+                    this.speakIfText(`I'm sorry, I couldn't schedule the appointment. Please try again later.`);
+                    return 'error'; 
+                }
+              
             },
             unknown: async (intent, question) => {
                 this.logger.updateText(`unknown`, true);
