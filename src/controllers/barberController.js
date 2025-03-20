@@ -18,14 +18,21 @@ export class BarberController {
 
                 return intent;
             },
-            check: 'check',
+            check: async (intent, question) => {
+                this.logger.updateText(`checking wasnt implemented...`, true);
+                this.speakIfText({ message: `checking wasnt implemented... Try scheduling instead.` });
+                console.log('checking', intent);
+                return 'ok';
+            },
             cancel: async (intent, question) => {
-                this.logger.updateText(`cancelling...`, true);
+                this.logger.updateText(`cancelling wasnt implemented...`, true);
+                this.speakIfText({ message: `cancelling wasnt implemented... Try scheduling instead.` });
                 console.log('cancelling', intent);
                 return 'ok';
             },
             giveup: async (intent, question) => {
                 this.logger.updateText(`giving up...`, true);
+                this.speakIfText({ message: `giving up...` });
                 console.log('giveup', intent);
                 return 'ok';
             },
@@ -34,11 +41,11 @@ export class BarberController {
                     this.logger.updateText(`scheduling appointment...`, true);
                     const res = await this.barberService.scheduleAppointment(intent);
                     this.logger.updateText(`appointment scheduled!`, true);
-                    this.speakIfText(`the appointment was scheduled, do I help in anything else?`);
+                    this.speakIfText({ message: `the appointment was scheduled, do I help in anything else?` });
                     return 'ok';
                 } catch (error) {
                     this.logger.updateText(`error scheduling appointment: ${error.message}`, true);
-                    this.speakIfText(`I'm sorry, I couldn't schedule the appointment. Please try again later.`);
+                    this.speakIfText({ message: `I'm sorry, the chosen time is not available anymore. Please try again.` });
                     return 'error'; 
                 }
               
@@ -96,7 +103,6 @@ export class BarberController {
             fromLanguage
         });
 
-        console.log('Translated text:', translatedText);
         return translatedText;
     }
 

@@ -52,8 +52,7 @@ async function initializeApp() {
     setTimeout(() => {
         agendaElement.toggleVisibility();
         reloadAgenda(barberService, agendaElement, speechManager)
-    }, 1000);
-    // }, 6000);
+    }, 6000);
 
     const animationController = new AnimationController();
     const modelLoader = new ModelLoader(animationController.animationSelect);
