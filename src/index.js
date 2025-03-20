@@ -27,12 +27,7 @@ async function initializeApp() {
     });
     const barberService = new BarberService()
     const translatorService = new TranslatorService();
-    // const translatedText = await translatorService.translate({
-    //     text: 'hello world',
-    //     fromLanguage: 'en',
-    //     toLanguage: 'pt '
-    // })
-    // console.log('translatedText', translatedText);
+
     // Initialize UI components
     const logElement = new TextUpdater();
     const agendaElement = new TextUpdater({ textElement: '#agendaText', tvElement: '#tv-agenda' });

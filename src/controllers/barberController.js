@@ -82,12 +82,13 @@ export class BarberController {
         return `Today is ${currentDate}.\n\nUser: ${transcript}`;
     }
 
-    async translateText(text, fromLanguage) {
+    async translateText(text, fromLanguage, toLanguage = 'en') {
         const translatedText = await this.translatorService.translate({
             text,
-            toLanguage: 'en',
+            toLanguage,
             fromLanguage
         });
+
         console.log('Translated text:', translatedText);
         return translatedText;
     }
@@ -97,11 +98,12 @@ export class BarberController {
         if(!message) return;
 
         const languageCode = this.speechManager.getSelectedLanguageCode().toLowerCase();
+
         if(languageCode === 'en') {
             this.speechManager.speak(message);
             return; 
         }
-        const translatedMessage = await this.translateText(message, languageCode);
+        const translatedMessage = await this.translateText(message, 'en',languageCode);
         this.speechManager.speak(translatedMessage);
     }
 
