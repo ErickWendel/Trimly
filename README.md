@@ -15,7 +15,7 @@ This project showcases the integration of Chrome's new [built-in AI](https://dev
 
 *Note: This is an experimental project and may break or behave unexpectedly. Use at your own risk.*
 
-[Live Demo](https://erickwendel.github.io/Trimly)
+[Live Demo](https://ewbr.cc/Trimly)
 
 ## ✨ Features
 
@@ -88,7 +88,7 @@ This is a proof of concept with several known issues:
 
 ### Usage
 
-1. Visit [the demo site](https://erickwendel.github.io/Trimly)
+1. Visit [the demo site](https://ewbr.cc/Trimly)
 2. Select your preferred language from the dropdown
 3. Hold the `Enter` key and ask about professional availability
    - Example: "Is Dr. Smith available tomorrow at 2 PM?"
