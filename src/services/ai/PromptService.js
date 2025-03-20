@@ -1,31 +1,33 @@
 export default class PromptService {
     #session = null;
-    #initialContext = null;
-    #intentPrompt = null;
     #attempts = 3;
-    constructor({ initialContext, intentPrompt }) {
-        this.#initialContext = initialContext;
-        this.#intentPrompt = intentPrompt;
-    }
-    async init() {
+    #logger = null;
+    constructor({ logger }) {
+        this.#logger = logger;
+    }   
+    async init(systemPrompt) {
         this.#session = await ai.languageModel.create({
-            systemPrompt: this.#initialContext.concat('\n', this.#intentPrompt),
+            systemPrompt: systemPrompt,
             expectedInputLanguages: ["en"],
         });
     }
 
     async prompt(text, attempts = this.#attempts) {
+        this.#logger.updateText(`prompting...`, true);
         const response = await this.#session.prompt(text);
         const result = this.#sanitizeJsonResponse(response, attempts)  ;
         if(!result && attempts > 0) {
+            this.#logger.updateText(`Failed to get a valid response from the AI, retrying... ${attempts} attempts left`, true);
             console.warn(`Failed to get a valid response from the AI, retrying... ${attempts} attempts left`, response );
             return this.prompt(text, attempts - 1);
         }
 
         if(attempts === 0) {
+            this.#logger.updateText(`Failed to get a valid response from the AI`, true);
             console.error('Failed to get a valid response from the AI', response );
             return null;
         }
+        this.#logger.updateText(`got correct response from the AI...`, true);
 
         return result;
     }

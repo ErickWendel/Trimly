@@ -38,6 +38,7 @@ export class APIChecker {
             '\nYou can still move the character around using the WASD keys.',
             true
         );
+        
     }
 
     async showWelcomeMessage() {
@@ -50,5 +51,6 @@ export class APIChecker {
             '\nYou can also move the character around using the WASD keys.',
             true
         );
+
     }
 } 

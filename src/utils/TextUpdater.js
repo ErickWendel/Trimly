@@ -16,6 +16,7 @@ export class TextUpdater {
     } 
 
     async updateText(text, shouldConcat = false) {
+              
         // Add message to queue
         this.messageQueue.push({
             text,
@@ -35,10 +36,19 @@ export class TextUpdater {
         }
         this.isProcessing = true;
         const { text, shouldConcat } = this.messageQueue.shift();
+        let concat = shouldConcat;
+         // Add line count check
+         const currentText = this.textElement.getAttribute('value') || '';
+         const currentLines = currentText.length + currentText.split('\n').length;
+         
+         if (currentLines > 200) {
+            concat = false;
+         }
+
 
         const currentValue = this.textElement.getAttribute('value') || '';
-        const baseText = shouldConcat ? `${currentValue}\n` : '';
-        this.textElement.setAttribute('position', this.keepInThePosition(!shouldConcat));
+        const baseText = concat ? `${currentValue}\n` : '';
+        this.textElement.setAttribute('position', this.keepInThePosition(!concat));
         
 
         await this.animateText(text, baseText);
@@ -50,20 +60,23 @@ export class TextUpdater {
     async animateText(text, baseText) {
         const characters = text.split('');
         let currentText = baseText;
-
+        let charCount = 0
         for (const char of characters) {
             currentText += char;
-            if (char === '\n') {
-                this.textElement.setAttribute('position', this.keepInThePosition());
-            }
+            
             this.textElement.setAttribute('value', currentText);
+            if (charCount > 30 || char === '\n') {
+                this.textElement.setAttribute('position', this.keepInThePosition());
+                charCount = 0;
+            }
+            charCount += 1;
             await this.delay(20);
         }
     }
 
     keepInThePosition(reset = false) {
-        if(!reset) {
-            this.currentPosition.y -= 0.2;
+        if (!reset) {
+            this.currentPosition.y -= 0.1;
             return this.currentPosition;
         }
 
@@ -74,4 +87,5 @@ export class TextUpdater {
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
+
 } 

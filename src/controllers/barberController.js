@@ -1,14 +1,16 @@
 
 export class BarberController {
-    constructor({ promptService, barberService, schedulerPrompt, speechManager, translatorService }) {
+    constructor({ promptService, barberService, schedulerPrompt, speechManager, translatorService, logger }) {
         this.promptService = promptService;
         this.barberService = barberService;
         this.schedulerPrompt = schedulerPrompt;
         this.speechManager = speechManager;
         this.translatorService = translatorService;
+        this.logger = logger;
 
         this.intents =  {
             availability: async (text, question) => {
+                this.logger.updateText(`checking availability...`, true);
                 const prompt = await this.handleAvailabilityRequest(text, question);
                 const intent = await this.translateAndPrompt(prompt);
                 console.log('availability', intent);
@@ -18,18 +20,22 @@ export class BarberController {
             },
             check: 'check',
             cancel: async (intent, question) => {
+                this.logger.updateText(`cancelling...`, true);
                 console.log('cancelling', intent);
                 return 'ok';
             },
             giveup: async (intent, question) => {
+                this.logger.updateText(`giving up...`, true);
                 console.log('giveup', intent);
                 return 'ok';
             },
             schedule: async (intent, question) => {
+                this.logger.updateText(`scheduling...`, true);
                 console.log('scheduling for', intent);
                 return 'ok';
             },
             unknown: async (intent, question) => {
+                this.logger.updateText(`unknown`, true);
                 console.log('unknown', intent);
                 return 'ok';
             },  
@@ -60,12 +66,16 @@ export class BarberController {
     async translateAndPrompt(transcript) {
         const languageCode = this.speechManager.getSelectedLanguageCode().toLowerCase();
         const transcriptWithDate = this.addCurrentDate(transcript);
+        const text = `the message is in [${languageCode.toUpperCase()}] and ${languageCode !== 'en' ? 'will be translated to english' : 'does not need translation'}.`;
+        this.logger.updateText(text, true);
 
         if (languageCode === 'en') {
             return this.promptService.prompt(transcriptWithDate);
         }
 
         const translatedText = await this.translateText(transcript, languageCode);
+        this.logger.updateText(`text was translated...`, true)
+
         return this.promptService.prompt(
             transcriptWithDate.replace(transcript, translatedText)
         );
@@ -101,6 +111,7 @@ export class BarberController {
 
 
     async initConversation(transcript) {
+        this.logger.updateText(`starting conversation...`, false);
         const intent = await this.translateAndPrompt(transcript);
         this.speakIfText(intent);
         console.log('intent', intent);

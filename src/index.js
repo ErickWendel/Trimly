@@ -33,23 +33,24 @@ async function initializeApp() {
     //     toLanguage: 'pt '
     // })
     // console.log('translatedText', translatedText);
-
+  // Initialize UI components
+  const logElement = new TextUpdater();
+  const agendaElement = new TextUpdater({ textElement: '#agendaText', tvElement: '#tv-agenda' });
     const prompts = await loadPrompts();
     prompts.intentPrompt = prompts.intentPrompt
     .replaceAll('{{professionals}}', JSON.stringify(await barberService.getProfessionals()));   
-    const promptService = new PromptService(prompts);
-    await promptService.init();
-
-    // Initialize UI components
-    const logElement = new TextUpdater();
-    const agendaElement = new TextUpdater({ textElement: '#agendaText', tvElement: '#tv-agenda' });
-
+    const promptService = new PromptService({
+            logger: logElement, 
+    });
+    await promptService.init(prompts.initialContext.concat('\n', prompts.intentPrompt));
+  
     const barberController = new BarberController({
         promptService,
         barberService,
         speechManager,
         translatorService,
         schedulerPrompt: prompts.schedulerPrompt,
+        logger: logElement,
     });
 
     const appointments = await barberService.getAppointments()
