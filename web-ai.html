@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <output id="output"></output>
+    <script>
+        (async () => {
+            function log(text) {
+                const output = document.getElementById('output');
+                output.innerHTML += `${text}<br><br>`;
+            }
+            const session = await ai.languageModel.create({
+                systemPrompt: 'answer questions in a funny way with emojis ',
+                expectedInputLanguages: ["en"],
+            });
+
+            const texts = [
+                'Hello, how are you? What is your name? What is your age? What is your favorite color? What is your favorite food? What is your favorite movie? What is your favorite song? What is your favorite book?',
+                'I like trains',
+                'What is the fastest train in the world?',
+                // 'What is the capital of Italy?',
+                // 'What is the capital of Spain?',
+                // 'What is the capital of Portugal?',
+                // 'What is the capital of Greece?',
+            ]
+            for (const text of texts) {
+                log(`<strong>prompting...</strong> <br>${text}`);
+                const response = await session.prompt(text);
+                log(`<strong>response:</strong> <br>${response}`);
+            }
+
+        })();
+
+    </script>
+</body>
+
+</html>
