@@ -6,13 +6,6 @@ export default class PromptService {
         this.#logger = logger;
     }
     async init(systemPrompt) {
-        // const availability = await window.LanguageModel.availability();
-        // if (availability === 'unavailable') {
-        //     const message = 'The AI model is not available on this device.';
-        //     this.#logger.updateText(message, true);
-        //     console.error(message);
-        //     return;
-        // }
         this.#session = await window.LanguageModel.create({
             initialPrompts: [
                 { role: 'system', content: systemPrompt },

@@ -27,7 +27,7 @@ export default {
         this.moveDirection = { x: 0, z: 0 };
         this.targetRotation = 0;
         this.cameraRig = document.getElementById('rig');
-        
+
         if (!this.cameraRig) {
             console.error('Camera rig not found! Make sure you have an entity with id="rig"');
             return;
@@ -35,10 +35,10 @@ export default {
 
         // Initialize camera position
         this.updateCameraPosition();
-        
+
         this.el.addEventListener('model-loaded', this.onModelLoaded.bind(this));
         window.addEventListener('play-animation', this.handlePlayAnimation.bind(this));
-        
+
         this.onKeyDown = this.onKeyDown.bind(this);
         this.onKeyUp = this.onKeyUp.bind(this);
         window.addEventListener('keydown', this.onKeyDown);
@@ -59,7 +59,7 @@ export default {
         if (!this.cameraRig) return;
 
         const characterPosition = this.el.object3D.position;
-        
+
         // Calculate camera position to maintain constant distance
         this.cameraRig.object3D.position.set(
             characterPosition.x,
@@ -85,7 +85,7 @@ export default {
 
     onKeyDown(event) {
         if (event.repeat) return;
-        
+
         switch(event.key.toLowerCase()) {
             case 'w':
                 this.moveDirection.z = 1;
@@ -157,7 +157,7 @@ export default {
         if (!model) return;
 
         this.mixer = new THREE.AnimationMixer(model);
-        
+
         // Initialize all available animations
         model.animations.forEach(clip => {
             this.actions[clip.name] = this.mixer.clipAction(clip);
@@ -165,6 +165,8 @@ export default {
 
         // Start with idle animation
         this.playAnimation(this.data.idleAnimation, true);
+
+        console.log('Available animations:', Object.keys(this.actions));
 
         // Dispatch event to notify animations are available
         window.dispatchEvent(new CustomEvent('animations-ready', {
@@ -198,7 +200,7 @@ export default {
         if (this.currentAction && this.currentAction._clip.name === animationName) return;
 
         const action = this.actions[animationName];
-        
+
         // Fade out current action if it exists
         if (this.currentAction) {
             this.currentAction.fadeOut(this.data.crossFadeDuration);
@@ -224,7 +226,7 @@ export default {
         // Handle movement
         if (this.moveDirection.x !== 0 || this.moveDirection.z !== 0) {
             const currentPosition = this.el.object3D.position;
-            
+
             // Calculate new position
             const newX = currentPosition.x + (this.moveDirection.x * this.data.movementSpeed);
             const newZ = currentPosition.z + (this.moveDirection.z * this.data.movementSpeed);

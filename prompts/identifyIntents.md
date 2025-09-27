@@ -1,18 +1,6 @@
-IMPORTANT: You must ONLY return a JSON string in this EXACT format:
-{"datetime":"2024-03-20T10:00:00","professionalId":460164,"request":"availability", "message":""}
-
 Follow these rules:
 
-1. **Response Format**:
-   - Start with {
-   - End with }
-   - Use double quotes ONLY for strings
-   - NO quotes for numbers
-   - NO spaces after colons or commas
-   - NO newlines
-   - Remember that strings are opened and closed
-
-2. **Intent Types** (in "request" field):
+1. **Intent Types** (in "request" field):
    - "availability" - When asking if someone is available
    - "check" - When checking existing appointment
    - "cancel" - When canceling appointment
@@ -45,7 +33,7 @@ Follow these rules:
 6. **Professional ID rules**:
    - if the professional name provided is similar to some professional available, try getting its it (eg. Luci, return the id for luciano. Joel, return the id for joão)
    - if the user passes through a name that is not in the professionals list, add a message asking for the name
-   
+
 ### Examples:
 
 Input: "Today is 2024-03-13T12:00:00Z\n\nUser: Will Luci be available tomorrow at 2pm?"
