@@ -42,14 +42,14 @@ export default class SpeechManager {
         const option = document.createElement('option');
         option.value = lang;
         option.textContent = new Intl.DisplayNames(['en'], { type: 'language' }).of(lang);
-        
+
         // Priority: 1. Saved Language, 2. Browser Language, 3. First Available
         if (savedLanguage && lang === savedLanguage) {
             option.selected = true;
         } else if (!savedLanguage && lang === userLanguage) {
             option.selected = true;
         }
-        
+
         this.#languageSelect.appendChild(option);
     });
 
@@ -108,13 +108,13 @@ export default class SpeechManager {
     const selectedLang = this.#languageSelect.value;
     const voices = this.#speechSynthesisService.getVoicesForLanguage(selectedLang);
     const savedVoice = localStorage.getItem(STORAGE_KEYS.SELECTED_VOICE);
-    
+
     this.#voiceSelect.innerHTML = '';
     voices.forEach(voice => {
         const option = document.createElement('option');
         option.value = voice.name;
         option.textContent = `${voice.name} (${voice.lang})`;
-        
+
         // Only select saved voice if it matches the current language
         if (savedVoice === voice.name && voice.lang.startsWith(selectedLang)) {
             option.selected = true;
@@ -149,7 +149,7 @@ export default class SpeechManager {
   #toggleControlsPanel() {
     this.#controlsPanel.classList.toggle('collapsed');
     localStorage.setItem(
-      STORAGE_KEYS.CONTROLS_COLLAPSED, 
+      STORAGE_KEYS.CONTROLS_COLLAPSED,
       this.#controlsPanel.classList.contains('collapsed')
     );
   }

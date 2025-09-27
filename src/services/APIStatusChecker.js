@@ -11,7 +11,7 @@ export class APIStatusChecker {
   static #checkAPI(elementId, condition) {
     const element = document.getElementById(elementId);
     if (!element) return;
-    
+
     const status = condition ? API_STATUS.AVAILABLE : API_STATUS.UNAVAILABLE;
     element.classList.add(status);
   }
@@ -20,8 +20,8 @@ export class APIStatusChecker {
     const { tts, stt, prompt, translator } = this.#API_ELEMENTS;
     const isTTSAvailable = 'speechSynthesis' in window;
     const isSTTAvailable = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-    const isPromptAvailable = window.ai?.languageModel;
-    const isTranslatorAvailable = window.ai?.translator;
+    const isPromptAvailable = window.LanguageModel;
+    const isTranslatorAvailable = window.Translator;
 
     this.#checkAPI(tts, isTTSAvailable);
     this.#checkAPI(stt, isSTTAvailable);
@@ -35,4 +35,4 @@ export class APIStatusChecker {
       translator: isTranslatorAvailable
     }
   }
-} 
+}

@@ -4,42 +4,63 @@ export default class PromptService {
     #logger = null;
     constructor({ logger }) {
         this.#logger = logger;
-    }   
+    }
     async init(systemPrompt) {
-        this.#session = await ai.languageModel.create({
-            systemPrompt: systemPrompt,
-            expectedInputLanguages: ["en"],
+        // const availability = await window.LanguageModel.availability();
+        // if (availability === 'unavailable') {
+        //     const message = 'The AI model is not available on this device.';
+        //     this.#logger.updateText(message, true);
+        //     console.error(message);
+        //     return;
+        // }
+        this.#session = await window.LanguageModel.create({
+            initialPrompts: [
+                { role: 'system', content: systemPrompt },
+            ],
+            expectedInputs: [{
+                type: "text",
+                languages: ["en"]
+            }],
+            // See below section
+            expectedOutputs: [{
+                type: "text",
+                languages: ["en"]
+            }],
         });
     }
 
-    async prompt(text, attempts = this.#attempts) {
+    async prompt(text, schema, attempts = this.#attempts) {
         this.#logger.updateText(`prompting...`, true);
-        const response = await this.#session.prompt(text);
-        const result = this.#sanitizeJsonResponse(response, attempts)  ;
-        if(!result && attempts > 0) {
+        console.log('text', text);
+        const response = await this.#session.prompt(text, {
+            responseConstraint: schema
+        });
+        console.log('AI response:', response);
+        const result = this.#sanitizeJsonResponse(response, attempts);
+        if (!result && attempts > 0) {
             this.#logger.updateText(`Failed to get a valid response from the AI, retrying... ${attempts} attempts left`, true);
-            console.warn(`Failed to get a valid response from the AI, retrying... ${attempts} attempts left`, response );
-            return this.prompt(text, attempts - 1);
+            console.warn(`Failed to get a valid response from the AI, retrying... ${attempts} attempts left`, response);
+            return this.prompt(text, schema, attempts - 1);
         }
 
-        if(attempts === 0) {
+        if (attempts === 0) {
             this.#logger.updateText(`Failed to get a valid response from the AI`, true);
-            console.error('Failed to get a valid response from the AI', response );
+            console.error('Failed to get a valid response from the AI', response);
             return null;
         }
         this.#logger.updateText(`got correct response from the AI...`, true);
 
         return result;
     }
-    
+
     #sanitizeJsonResponse(text) {
-        const json = text.replaceAll('json', '').replaceAll('`', '')
+        const json = text;
         try {
             const item = JSON.parse(json);
-            if(item.datetime) { item.datetime = new Date(item.datetime) }
+            if (item.datetime) { item.datetime = new Date(item.datetime) }
             return item;
         } catch (error) {
             return null;
         }
     }
-}   
+}

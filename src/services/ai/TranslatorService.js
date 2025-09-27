@@ -8,13 +8,18 @@ export default class TranslatorService {
       }
 
       // Create a new translator instance with the correct language pair
-      const translator = await ai.translator.create({
+      const translator = await window.Translator.create({
         sourceLanguage: fromLanguage,
         targetLanguage: toLanguage,
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => {
+            console.log(`Downloaded ${e.loaded * 100}%`);
+          });
+        },
       });
 
       // Use the translation API
-      const response = await translator.translate(text);
+      const { text: response } = await translator.translate(text);
 
       return response;
     } catch (error) {

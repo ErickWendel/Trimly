@@ -1,3 +1,4 @@
+import { intentSchema, schedulerSchema } from '../config/schemas.js';
 
 export class BarberController {
     constructor({ promptService, barberService, schedulerPrompt, speechManager, translatorService, logger }) {
@@ -12,7 +13,7 @@ export class BarberController {
             availability: async (text, question) => {
                 this.logger.updateText(`checking availability...`, true);
                 const prompt = await this.handleAvailabilityRequest(text, question);
-                const intent = await this.translateAndPrompt(prompt);
+                const intent = await this.translateAndPrompt(prompt, schedulerSchema);
                 console.log('availability', intent);
                 this.speakIfText(intent);
 
@@ -46,15 +47,15 @@ export class BarberController {
                 } catch (error) {
                     this.logger.updateText(`error scheduling appointment: ${error.message}`, true);
                     this.speakIfText({ message: `I'm sorry, the chosen time is not available anymore. Please try again.` });
-                    return 'error'; 
+                    return 'error';
                 }
-              
+
             },
             unknown: async (intent, question) => {
                 this.logger.updateText(`unknown`, true);
                 console.log('unknown', intent);
                 return 'ok';
-            },  
+            },
             change: 'change'
         };
     }
@@ -73,21 +74,22 @@ export class BarberController {
             .replaceAll('{{professional}}', schedulerData.professional);
     }
 
-    async translateAndPrompt(transcript) {
+    async translateAndPrompt(transcript, schema) {
         const languageCode = this.speechManager.getSelectedLanguageCode().toLowerCase();
         const transcriptWithDate = this.addCurrentDate(transcript);
         const text = `the message is in [${languageCode.toUpperCase()}] and ${languageCode !== 'en' ? 'will be translated to english' : 'does not need translation'}.`;
         this.logger.updateText(text, true);
 
         if (languageCode === 'en') {
-            return this.promptService.prompt(transcriptWithDate);
+            return this.promptService.prompt(transcriptWithDate, schema);
         }
 
         const translatedText = await this.translateText(transcript, languageCode);
         this.logger.updateText(`text was translated...`, true)
 
         return this.promptService.prompt(
-            transcriptWithDate.replace(transcript, translatedText)
+            transcriptWithDate.replace(transcript, translatedText),
+            schema
         );
     }
 
@@ -114,7 +116,7 @@ export class BarberController {
 
         if(languageCode === 'en') {
             this.speechManager.speak(message);
-            return; 
+            return;
         }
         const translatedMessage = await this.translateText(message, 'en',languageCode);
         this.speechManager.speak(translatedMessage);
@@ -123,12 +125,12 @@ export class BarberController {
 
     async initConversation(transcript) {
         this.logger.updateText(`starting conversation...`, false);
-        const intent = await this.translateAndPrompt(transcript);
+        const intent = await this.translateAndPrompt(transcript, intentSchema);
         this.speakIfText(intent);
         console.log('intent', intent);
-        
+
         await this.intents[intent.request](intent, transcript);
-        window.dispatchEvent(new CustomEvent(`INTENT-${intent.request}`, { detail: { intent: intent } }));   
+        window.dispatchEvent(new CustomEvent(`INTENT-${intent.request}`, { detail: { intent: intent } }));
 
         // scheduler confirmation
         // {
@@ -150,4 +152,4 @@ export class BarberController {
 
         }
     }
-} 
+}
