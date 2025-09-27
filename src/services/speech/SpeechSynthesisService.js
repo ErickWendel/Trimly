@@ -56,14 +56,22 @@ export default class SpeechSynthesisService {
       const utterance = new SpeechSynthesisUtterance(text);
       if (voice) utterance.voice = voice;
       if (languageCode) utterance.lang = languageCode;
-      // utterance.onboundary = (event) => {
-      //   console.log('boundary', event);
-      // }
+      
+      utterance.onstart = () => {
+        window.dispatchEvent(new CustomEvent('speech-synthesis-started'));
+      };
 
-      utterance.onend = resolve;
-      utterance.onerror = reject;
+      utterance.onend = () => {
+        window.dispatchEvent(new CustomEvent('speech-synthesis-stopped'));
+        resolve();
+      };
+      
+      utterance.onerror = (event) => {
+        window.dispatchEvent(new CustomEvent('speech-synthesis-stopped'));
+        reject(event);
+      };
       
       this.#synthesis.speak(utterance);
     });
   }
-} 
+}

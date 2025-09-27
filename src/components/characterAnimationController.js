@@ -2,7 +2,10 @@
 
 export default {
     schema: {
-        idleAnimation: { type: 'string', default: 'Idle_B' },
+        idleAnimations: { type: 'array', default: ['Idle', 'Idle_B', 'Unarmed_Idle'] },
+        rareIdleAnimation: { type: 'string', default: 'Taunt' },
+        listeningAnimation: { type: 'string', default: 'Interact' },
+        speakingAnimation: { type: 'string', default: 'Spellcasting' },
         walkingAnimation: { type: 'string', default: 'Walking_A' },
         walkingBackwardsAnimation: { type: 'string', default: 'Walking_A' },
         walkingLeftAnimation: { type: 'string', default: 'Walking_A' },
@@ -43,12 +46,25 @@ export default {
         this.onKeyUp = this.onKeyUp.bind(this);
         window.addEventListener('keydown', this.onKeyDown);
         window.addEventListener('keyup', this.onKeyUp);
+
+        // Listen for custom animation events
+        window.addEventListener('speech-recognition-started', () => this.playListeningAnimation());
+        window.addEventListener('speech-recognition-stopped', () => this.playIdleAnimation());
+        window.addEventListener('speech-synthesis-started', () => this.playSpeakingAnimation());
+        window.addEventListener('speech-synthesis-stopped', () => this.playIdleAnimation());
     },
 
     remove() {
         window.removeEventListener('play-animation', this.handlePlayAnimation.bind(this));
         window.removeEventListener('keydown', this.onKeyDown);
         window.removeEventListener('keyup', this.onKeyUp);
+
+        // Remove custom animation event listeners
+        window.removeEventListener('speech-recognition-started', () => this.playListeningAnimation());
+        window.removeEventListener('speech-recognition-stopped', () => this.playIdleAnimation());
+        window.removeEventListener('speech-synthesis-started', () => this.playSpeakingAnimation());
+        window.removeEventListener('speech-synthesis-stopped', () => this.playIdleAnimation());
+
         if (this.mixer) {
             this.mixer.stopAllAction();
             this.mixer = null;
@@ -164,7 +180,7 @@ export default {
         });
 
         // Start with idle animation
-        this.playAnimation(this.data.idleAnimation, true);
+        this.playIdleAnimation();
 
         console.log('Available animations:', Object.keys(this.actions));
 
@@ -213,6 +229,26 @@ export default {
             .play();
 
         this.currentAction = action;
+    },
+
+    playIdleAnimation() {
+        const idleAnimations = this.data.idleAnimations;
+        let animationName = idleAnimations[Math.floor(Math.random() * idleAnimations.length)];
+
+        // Occasionally play a rare idle animation
+        if (Math.random() < 0.1) { // 10% chance
+            animationName = this.data.rareIdleAnimation;
+        }
+
+        this.playAnimation(animationName, true);
+    },
+
+    playListeningAnimation() {
+        this.playAnimation(this.data.listeningAnimation, true);
+    },
+
+    playSpeakingAnimation() {
+        this.playAnimation(this.data.speakingAnimation, true);
     },
 
     tick(time, delta) {

@@ -57,6 +57,7 @@ export default class SpeechRecognitionService {
     try {
       this.#recognition.start();
       this.#isRecording = true;
+      window.dispatchEvent(new CustomEvent('speech-recognition-started'));
       window.dispatchEvent(new CustomEvent(SPEECH_EVENTS.SPEECH_START));
     } catch (error) {
       console.error('Failed to start speech recognition:', error);
@@ -75,6 +76,7 @@ export default class SpeechRecognitionService {
 
     try {
       this.#recognition.stop();
+      window.dispatchEvent(new CustomEvent('speech-recognition-stopped'));
       // Note: #isRecording will be set to false in the onend event handler
     } catch (error) {
       console.error('Failed to stop speech recognition:', error);
@@ -97,4 +99,4 @@ export default class SpeechRecognitionService {
   get isRecording() {
     return this.#isRecording;
   }
-} 
+}
