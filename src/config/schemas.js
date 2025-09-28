@@ -10,7 +10,7 @@ export const intentSchema = {
         },
         "request": {
             "type": "string",
-            "enum": ["availability", "check", "cancel", "schedule", "giveup", "unknown"]
+            "enum": ["availability", "check", "cancel", "schedule", "giveup", "information", "unknown"]
         },
         "message": {
             "type": "string"

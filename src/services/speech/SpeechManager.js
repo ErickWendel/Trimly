@@ -79,6 +79,7 @@ export default class SpeechManager {
 
     // Speech recognition keyboard controls
     document.addEventListener('keydown', (event) => {
+      if (event.repeat) return;
       if (event.key === 'Enter' && !this.#speechRecognitionService.isRecording) {
         this.#startRecording();
       }

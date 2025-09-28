@@ -6,7 +6,7 @@
         936183,
         460164
       ],
-      "schedule": 540
+      "schedule": "09:00"
     },
     {
       "professionals": [
@@ -14,7 +14,7 @@
         936183,
         460164
       ],
-      "schedule": 570
+      "schedule": "09:30"
     },
     {
       "professionals": [
@@ -22,7 +22,7 @@
         936183,
         460164
       ],
-      "schedule": 600
+      "schedule": "10:00"
     },
     {
       "professionals": [
@@ -30,7 +30,7 @@
         936183,
         460164
       ],
-      "schedule": 630
+      "schedule": "10:30"
     },
     {
       "professionals": [
@@ -38,7 +38,7 @@
         936183,
         460164
       ],
-      "schedule": 660
+      "schedule": "11:00"
     },
     {
       "professionals": [
@@ -46,7 +46,7 @@
         936183,
         460164
       ],
-      "schedule": 690
+      "schedule": "11:30"
     },
     {
       "professionals": [
@@ -54,7 +54,7 @@
         936183,
         460164
       ],
-      "schedule": 780
+      "schedule": "13:00"
     },
     {
       "professionals": [
@@ -62,7 +62,7 @@
         936183,
         460164
       ],
-      "schedule": 810
+      "schedule": "13:30"
     },
     {
       "professionals": [
@@ -70,7 +70,7 @@
         936183,
         460164
       ],
-      "schedule": 840
+      "schedule": "14:00"
     },
     {
       "professionals": [
@@ -78,7 +78,7 @@
         936183,
         460164
       ],
-      "schedule": 870
+      "schedule": "14:30"
     },
     {
       "professionals": [
@@ -86,7 +86,7 @@
         936183,
         460164
       ],
-      "schedule": 900
+      "schedule": "15:00"
     },
     {
       "professionals": [
@@ -94,7 +94,7 @@
         936183,
         460164
       ],
-      "schedule": 930
+      "schedule": "15:30"
     },
     {
       "professionals": [
@@ -102,7 +102,7 @@
         936183,
         460164
       ],
-      "schedule": 960
+      "schedule": "16:00"
     },
     {
       "professionals": [
@@ -110,7 +110,7 @@
         936183,
         460164
       ],
-      "schedule": 990
+      "schedule": "16:30"
     },
     {
       "professionals": [
@@ -118,7 +118,7 @@
         936183,
         460164
       ],
-      "schedule": 1020
+      "schedule": "17:00"
     },
     {
       "professionals": [
@@ -126,7 +126,7 @@
         936183,
         460164
       ],
-      "schedule": 1050
+      "schedule": "17:30"
     }
   ],
   "interval": 30,

@@ -36,7 +36,7 @@ export class BarberService {
 
     async #getStorageData(key, fallbackUrl = null) {
         const storedData = localStorage.getItem(key);
-        
+
         if (!storedData && fallbackUrl) {
             const baseUrl = window.location.href
             const response = await fetch(`${baseUrl}${fallbackUrl}`);
@@ -59,81 +59,89 @@ export class BarberService {
         );
 
         const availableTimes = allTimes.available || [];
-        
-        return professionalId 
+
+        return professionalId
             ? availableTimes.filter(time => time.professionals.includes(professionalId))
             : availableTimes;
     }
 
     async scheduleAppointment({ datetime, professionalId }) {
-        // Get current appointments and available times
         const appointments = await this.getAppointments();
         const availableTimes = await this.#loadAvailableTimes();
-        // Find the time slot to book
-        const timeSlot = availableTimes.find(slot => 
-            this.#convertScheduleToDateTime(datetime, slot.schedule).toISOString() === datetime.toISOString()
+        const timeSlotIndex = availableTimes.findIndex(slot =>
+            this.#convertScheduleToDateTime(datetime, slot.schedule).getTime() === datetime.getTime() &&
+            slot.professionals.includes(professionalId)
         );
 
-        if (!timeSlot) {
-            throw new Error('Time slot not available');
+        if (timeSlotIndex === -1) {
+            throw new Error('Time slot not available for this professional');
         }
+
+        const timeSlot = availableTimes[timeSlotIndex];
         const professionals = await this.getProfessionals();
-        // Create new appointment
         const newAppointment = {
             id: crypto.randomUUID(),
             datetime,
-            professional: professionals.find(professional =>
-                professional.id === professionalId
-            ),
+            professional: professionals.find(p => p.id === professionalId),
             schedule: timeSlot.schedule
         };
 
-
-        // Update appointments
         appointments.push(newAppointment);
         await this.#saveStorageData(STORAGE_KEYS.AGENDA, appointments);
 
-        // Remove booked time from available times
-        const updatedTimes = availableTimes.filter(slot => 
-            this.#convertScheduleToDateTime(datetime, slot.schedule).toISOString() !== datetime.toISOString()
-        );
+        // Remove the professional from the timeslot
+        timeSlot.professionals = timeSlot.professionals.filter(id => id !== professionalId);
+
+        // If no professionals are left for this slot, remove the slot
+        if (timeSlot.professionals.length === 0) {
+            availableTimes.splice(timeSlotIndex, 1);
+        }
 
         await this.#saveStorageData(
-            STORAGE_KEYS.AVAILABLE_TIMES, 
-            { available: updatedTimes }
+            STORAGE_KEYS.AVAILABLE_TIMES,
+            { available: availableTimes }
         );
 
         return newAppointment;
     }
 
     async cancelAppointment(appointmentId) {
-        // Get current appointments
         const appointments = await this.getAppointments();
-        const appointment = appointments.find(apt => apt.id === appointmentId);
+        const appointmentIndex = appointments.findIndex(apt => apt.id === appointmentId);
 
-        if (!appointment) {
+        if (appointmentIndex === -1) {
             throw new Error('Appointment not found');
         }
 
-        // Get available times
+        const appointment = appointments[appointmentIndex];
         const availableTimes = await this.#loadAvailableTimes();
 
-        // Create time slot to return to available times
-        const returnedTimeSlot = {
-            schedule: appointment.schedule,
-            professionals: [appointment.professionalId]
-        };
+        const timeSlot = availableTimes.find(slot => slot.schedule === appointment.schedule);
 
-        // Update available times
-        availableTimes.push(returnedTimeSlot);
+        if (timeSlot) {
+            // If the timeslot exists, add the professional back
+            if (!timeSlot.professionals.includes(appointment.professional.id)) {
+                timeSlot.professionals.push(appointment.professional.id);
+            }
+        } else {
+            // If the timeslot doesn't exist, create it
+            availableTimes.push({
+                schedule: appointment.schedule,
+                professionals: [appointment.professional.id]
+            });
+        }
+
+        // Sort by schedule to keep the data tidy
+        availableTimes.sort((a, b) => a.schedule - b.schedule);
+
         await this.#saveStorageData(
-            STORAGE_KEYS.AVAILABLE_TIMES, 
+            STORAGE_KEYS.AVAILABLE_TIMES,
             { available: availableTimes }
         );
 
         // Remove appointment
-        const updatedAppointments = appointments.filter(apt => apt.id !== appointmentId);
-        await this.#saveStorageData(STORAGE_KEYS.AGENDA, updatedAppointments);
+        appointments.splice(appointmentIndex, 1);
+        await this.#saveStorageData(STORAGE_KEYS.AGENDA, appointments);
 
         return true;
     }
@@ -144,35 +152,54 @@ export class BarberService {
 
     #convertScheduleToDateTime(date, schedule) {
         const dateObj = new Date(date);
-        const hours = Math.floor(schedule / 60);
-        const minutes = schedule % 60;
+        const [hours, minutes] = schedule.split(':').map(Number);
+        // Set the time on the given date, preserving the original date part
         dateObj.setHours(hours, minutes, 0, 0);
         return dateObj;
     }
 
     async getAgenda({ datetime, professionalId }) {
         const professionals = await this.getProfessionals();
-        const availableTimes = await this.#loadAvailableTimes(professionalId);
-        
-        const allSlots = availableTimes.map(slot => ({
-            datetime: this.#convertScheduleToDateTime(datetime, slot.schedule),
-            professionals: slot.professionals.find(id =>
-                professionals.find(p => p.id === id)
-            )
-        }));
+        const professionalName = professionalId ? professionals.find(p => p.id === professionalId)?.name : null;
 
-        const chosenSlot = allSlots.find(item => 
-            item.datetime.toISOString() === datetime.toISOString()
+        // 1. Get all available time slots for the given day
+        const allTimes = await this.#loadAvailableTimes();
+        if (!allTimes.length) {
+            return {
+                available: false,
+                professional: professionalName,
+                otherTime: "No slots available for this day."
+            };
+        }
+
+        // 2. Filter slots by the requested professional, if one was provided
+        const professionalSlots = professionalId
+            ? allTimes.filter(slot => slot.professionals.includes(professionalId))
+            : allTimes;
+
+        if (!professionalSlots.length) {
+            const nextAvailableTime = this.#convertScheduleToDateTime(datetime, allTimes[0].schedule);
+            return {
+                available: false,
+                professional: professionalName,
+                otherTime: nextAvailableTime.toLocaleString()
+            };
+        }
+
+        // 3. Check if the specific datetime is in the professional's available slots
+        const chosenSlot = professionalSlots.find(slot =>
+            this.#convertScheduleToDateTime(datetime, slot.schedule).getTime() === datetime?.getTime()
         );
+
         const isAvailable = !!chosenSlot;
-       
+
+        // 4. If not available, suggest the next available time for that professional
+        const otherTime = isAvailable ? null : this.#convertScheduleToDateTime(datetime, professionalSlots[0].schedule).toLocaleString();
+
         return {
             available: isAvailable,
-            professional: professionalId 
-                ? professionals.find(p => p.id === professionalId)?.name 
-                : null,
-
-            otherTime: isAvailable ? null : allSlots[0].datetime.toLocaleString()
+            professional: professionalName,
+            otherTime: otherTime
         };
     }
-}   
+}

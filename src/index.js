@@ -21,7 +21,7 @@ async function initializeApp() {
     const logElement = new TextUpdater();
     const agendaElement = new TextUpdater({ textElement: '#agendaText', tvElement: '#tv-agenda' });
     agendaElement.toggleVisibility();
-    
+
     // Setup API checking
     const apiChecker = new APIChecker();
     apiChecker.checkAndLogAvailability(APIStatusChecker.checkAvailability());
@@ -32,8 +32,6 @@ async function initializeApp() {
     });
     const barberService = new BarberService()
     const translatorService = new TranslatorService();
-
-    
 
     const prompts = await loadPrompts();
     prompts.intentPrompt = prompts.intentPrompt
@@ -71,7 +69,7 @@ async function initializeApp() {
         console.log('schedule', event.detail.intent);
         reloadAgenda(barberService, agendaElement, speechManager)
     })
-    // runTestScenarios(barberController)
+    runTestScenarios(barberController)
 }
 
 async function reloadAgenda(barberService, agendaElement, speechManager) {
@@ -83,7 +81,7 @@ async function reloadAgenda(barberService, agendaElement, speechManager) {
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
     });
 
     if (appointments.length > 0) {
@@ -104,8 +102,13 @@ async function reloadAgenda(barberService, agendaElement, speechManager) {
 
 function runTestScenarios() {
     const scenarios = [
-        'will Luciano be available on 20th of march at 11am?'
+        // 'will Luciano be available on 30th of september at 09am?',
+        // 'will Kuan be available tomorrow at 2pm?',
+        // 'what services can you offer?',
+        // 'what professionals are available?',
+        'can you cancel my appointment with Luciano on September 30th at 9am?'
     ];
+
     window.addEventListener('INTENT-availability', (event) => {
         console.log('availability', event.detail.intent);
         window.dispatchEvent(new CustomEvent(SPEECH_EVENTS.SPEECH_RECOGNIZED, { detail: { transcript: `yes, sure!` } }));

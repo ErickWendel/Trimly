@@ -182,8 +182,6 @@ export default {
         // Start with idle animation
         this.playIdleAnimation();
 
-        console.log('Available animations:', Object.keys(this.actions));
-
         // Dispatch event to notify animations are available
         window.dispatchEvent(new CustomEvent('animations-ready', {
             detail: {

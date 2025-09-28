@@ -10,14 +10,15 @@ export class BarberController {
         this.logger = logger;
 
         this.intents =  {
-            availability: async (text, question) => {
+            availability: async (intent, question) => {
                 this.logger.updateText(`checking availability...`, true);
-                const prompt = await this.handleAvailabilityRequest(text, question);
-                const intent = await this.translateAndPrompt(prompt, schedulerSchema);
-                console.log('availability', intent);
-                this.speakIfText(intent);
+                const prompt = await this.handleAvailabilityRequest(intent, question);
+                if (!prompt) return;
 
-                return intent;
+                const responseIntent = await this.translateAndPrompt(prompt, schedulerSchema);
+                this.speakIfText(responseIntent);
+
+                return responseIntent;
             },
             check: async (intent, question) => {
                 this.logger.updateText(`checking wasnt implemented...`, true);
@@ -40,9 +41,13 @@ export class BarberController {
             schedule: async (intent, question) => {
                 try {
                     this.logger.updateText(`scheduling appointment...`, true);
+                    // Ensure datetime is a Date object before passing to services
+                    if (typeof intent.datetime === 'string') {
+                        intent.datetime = new Date(intent.datetime);
+                    }
                     const res = await this.barberService.scheduleAppointment(intent);
                     this.logger.updateText(`appointment scheduled!`, true);
-                    this.speakIfText(intent);
+                    this.speakIfText({ message: `Your appointment for ${res.professional.name} at ${res.datetime.toLocaleTimeString()} is confirmed!` });
                     return 'ok';
                 } catch (error) {
                     this.logger.updateText(`error scheduling appointment: ${error.message}`, true);
@@ -50,6 +55,11 @@ export class BarberController {
                     return 'error';
                 }
 
+            },
+            information: async (intent, question) => {
+                this.logger.updateText(`providing information...`, true);
+                console.log('information', intent);
+                return 'ok';
             },
             unknown: async (intent, question) => {
                 this.logger.updateText(`unknown`, true);
@@ -61,6 +71,12 @@ export class BarberController {
     }
 
     async handleAvailabilityRequest(text, question) {
+        if (text.professionalId === 'not_found') {
+            this.logger.updateText(text.message, true);
+            this.speakIfText(text);
+            return;
+        }
+
         const schedulerData = await this.barberService.getAgenda(text);
         this.logger.updateText(`barber ${schedulerData.available ? 'is' : 'is not'} available. Prompting...`, true);
         const prompt = this.createPrompt(schedulerData, question);
@@ -94,7 +110,7 @@ export class BarberController {
     }
 
     addCurrentDate(transcript) {
-        const currentDate = new Date().toISOString();
+        const currentDate = new Date().toString();
         return `Today is ${currentDate}.\n\nUser: ${transcript}`;
     }
 
@@ -126,30 +142,9 @@ export class BarberController {
     async initConversation(transcript) {
         this.logger.updateText(`starting conversation...`, false);
         const intent = await this.translateAndPrompt(transcript, intentSchema);
-        this.speakIfText(intent);
         console.log('intent', intent);
 
         await this.intents[intent.request](intent, transcript);
         window.dispatchEvent(new CustomEvent(`INTENT-${intent.request}`, { detail: { intent: intent } }));
-
-        // scheduler confirmation
-        // {
-        //     const otherIntent = await this.translateAndPrompt(`sure!`);
-        //     const confirmation = await this.intents[otherIntent.request](otherIntent, transcript);
-        //     console.log('confirmation', confirmation);
-        //     this.speakIfText(confirmation);
-        // }
-        {
-            // const otherIntent = await barberController.translateAndPrompt(
-            //     prompts.intentPrompt.concat(`\nUser: no thanks, what about tomorrow at 11am?`)
-            // );
-            // if(otherIntent?.request) {
-            //     const confirmation = await requests[otherIntent.request](otherIntent, transcript);
-            //     console.log('confirmation', confirmation);
-            // }
-            // const otherIntent2 = await barberController.translateAndPrompt(prompts.intentPrompt.concat(`\nUser: no!`));
-            // debugger;
-
-        }
     }
 }
