@@ -1,15 +1,16 @@
-import { intentSchema, schedulerSchema } from '../config/schemas.js';
+import { intentSchema, schedulerSchema, messageSchema } from '../config/schemas.js';
 
 export class BarberController {
-    constructor({ promptService, barberService, schedulerPrompt, speechManager, translatorService, logger }) {
+    constructor({ promptService, barberService, schedulerPrompt, messageGeneratorPrompt, speechManager, translatorService, logger }) {
         this.promptService = promptService;
         this.barberService = barberService;
         this.schedulerPrompt = schedulerPrompt;
+        this.messageGeneratorPrompt = messageGeneratorPrompt;
         this.speechManager = speechManager;
         this.translatorService = translatorService;
         this.logger = logger;
 
-        this.intents =  {
+        this.intents = {
             availability: async (intent, question) => {
                 this.logger.updateText(`checking availability...`, true);
                 const prompt = await this.handleAvailabilityRequest(intent, question);
@@ -21,16 +22,83 @@ export class BarberController {
                 return responseIntent;
             },
             check: async (intent, question) => {
-                this.logger.updateText(`checking wasnt implemented...`, true);
-                this.speakIfText({ message: `checking wasnt implemented... Try scheduling instead.` });
-                console.log('checking', intent);
-                return 'ok';
+                this.logger.updateText(`Checking your appointments...`, true);
+                let appointments = await this.barberService.getAppointments();
+
+                if (!appointments.length) {
+                    return this.generateMessage({
+                        message: "You have no appointments scheduled."
+                    }, question);
+                }
+
+                const intentDate = intent.datetime ? new Date(intent.datetime) : null;
+
+                if (intentDate) {
+                    appointments = appointments.filter(apt => {
+                        const aptDate = new Date(apt.datetime);
+                        return aptDate.getFullYear() === intentDate.getFullYear() &&
+                            aptDate.getMonth() === intentDate.getMonth() &&
+                            aptDate.getDate() === intentDate.getDate();
+                    });
+                }
+
+                if (intent.professionalId) {
+                    appointments = appointments.filter(apt => apt.professional.id === intent.professionalId);
+                }
+
+                if (!appointments.length) {
+                    return this.generateMessage({
+                        message: "I couldn't find any appointments matching your criteria."
+                    }, question);
+                }
+
+                const appointmentDetails = appointments.map(apt =>
+                    `- ${new Date(apt.datetime).toLocaleTimeString()} with ${apt.professional.name}`
+                ).join('\n');
+
+                return this.generateMessage({
+                    message: `I found the following appointments:\n${appointmentDetails}`
+                }, question);
             },
             cancel: async (intent, question) => {
-                this.logger.updateText(`cancelling wasnt implemented...`, true);
-                this.speakIfText({ message: `cancelling wasnt implemented... Try scheduling instead.` });
-                console.log('cancelling', intent);
-                return 'ok';
+                this.logger.updateText(`Attempting to cancel appointment...`, true);
+
+                if (!intent.datetime) {
+                    return this.generateMessage({
+                        message: "I need a date to find an appointment to cancel. Could you please provide one?"
+                    }, question);
+                }
+
+                const appointments = await this.barberService.getAppointments();
+                const intentDate = new Date(intent.datetime);
+
+                const matchingAppointments = appointments.filter(apt => {
+                    const aptDate = new Date(apt.datetime);
+                    const professionalMatch = intent.professionalId ? apt.professional.id === intent.professionalId : true;
+                    const dateMatch = aptDate.getFullYear() === intentDate.getFullYear() &&
+                        aptDate.getMonth() === intentDate.getMonth() &&
+                        aptDate.getDate() === intentDate.getDate();
+
+                    // if time is also passed, try to match it
+                    if (intent.datetime.includes('T')) {
+                        return aptDate.getTime() === intentDate.getTime() && professionalMatch;
+                    }
+                    return dateMatch && professionalMatch;
+                });
+
+
+                if (matchingAppointments.length === 0) {
+                    return this.generateMessage({
+                        message: "I couldn't find an appointment matching your request. Please check the details and try again."
+                    }, question);
+                }
+
+                const appointmentToCancel = matchingAppointments[0];
+                return this.generateMessage({
+                    message: `I found an appointment for ${appointmentToCancel.professional.name} at ${new Date(appointmentToCancel.datetime).toLocaleTimeString()}. Would you like to cancel this one?`,
+                    suggestion: appointmentToCancel
+                }, question);
+
             },
             giveup: async (intent, question) => {
                 this.logger.updateText(`giving up...`, true);
@@ -47,12 +115,15 @@ export class BarberController {
                     }
                     const res = await this.barberService.scheduleAppointment(intent);
                     this.logger.updateText(`appointment scheduled!`, true);
-                    this.speakIfText({ message: `Your appointment for ${res.professional.name} at ${res.datetime.toLocaleTimeString()} is confirmed!` });
-                    return 'ok';
+                    return this.generateMessage({
+                        message: `Your appointment for ${res.professional.name} at ${res.datetime.toLocaleTimeString()} is confirmed!`
+                    }, question);
+
                 } catch (error) {
                     this.logger.updateText(`error scheduling appointment: ${error.message}`, true);
-                    this.speakIfText({ message: `I'm sorry, the chosen time is not available anymore. Please try again.` });
-                    return 'error';
+                    return this.generateMessage({
+                        message: `I'm sorry, the chosen time is not available anymore. Please try again.`
+                    }, question);
                 }
 
             },
@@ -146,5 +217,16 @@ export class BarberController {
 
         await this.intents[intent.request](intent, transcript);
         window.dispatchEvent(new CustomEvent(`INTENT-${intent.request}`, { detail: { intent: intent } }));
+    }
+
+    async generateMessage(context, question) {
+
+        const prompt = this.messageGeneratorPrompt
+            .replaceAll('{{data}}', JSON.stringify(context))
+            .replaceAll('{{question}}', question);
+
+        const { message } = await this.translateAndPrompt(prompt, messageSchema);
+        this.logger.updateText(message, true);
+        this.speakIfText({ message });
     }
 }

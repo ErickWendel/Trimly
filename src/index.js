@@ -47,6 +47,7 @@ async function initializeApp() {
         speechManager,
         translatorService,
         schedulerPrompt: prompts.schedulerPrompt,
+        messageGeneratorPrompt: prompts.messageGeneratorPrompt,
         logger: logElement,
     });
 
@@ -69,7 +70,7 @@ async function initializeApp() {
         console.log('schedule', event.detail.intent);
         reloadAgenda(barberService, agendaElement, speechManager)
     })
-    runTestScenarios(barberController)
+    // runTestScenarios(barberController)
 }
 
 async function reloadAgenda(barberService, agendaElement, speechManager) {
@@ -102,11 +103,14 @@ async function reloadAgenda(barberService, agendaElement, speechManager) {
 
 function runTestScenarios() {
     const scenarios = [
-        // 'will Luciano be available on 30th of september at 09am?',
+        // 'will Luciano be available on 30th of september at 17?',
+        'cancel my appointment with Luciano tomorrow',
         // 'will Kuan be available tomorrow at 2pm?',
         // 'what services can you offer?',
         // 'what professionals are available?',
-        'can you cancel my appointment with Luciano on September 30th at 9am?'
+        // 'can you cancel my appointment with Kauan today at 2pm?',
+        // 'can you cancel my appointment with Luciano on September 30th at 9am?',
+        // 'what time is my appointment with Luciano on September 30th?'
     ];
 
     window.addEventListener('INTENT-availability', (event) => {

@@ -31,3 +31,18 @@ export const schedulerSchema = {
     },
     "required": ["isAIReply", "message"]
 };
+
+export const messageSchema = {
+    type: 'object',
+    properties: {
+        message: {
+            type: 'string',
+            description: 'a user-friendly message to be spoken to the user'
+        },
+        isAIReply: {
+            type: 'boolean',
+            description: 'a flag to indicate that this is a message from the AI'
+        }
+    },
+    required: ['message', 'isAIReply']
+}
