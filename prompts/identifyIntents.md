@@ -32,7 +32,7 @@ Your goal is to identify the user's intent and extract key information from thei
 ### General Rules:
 
 *   **Professional IDs**: Use the provided list `{{professionals}}` to match names to IDs. If an intent requires a professional (like 'schedule', 'availability', or 'check') but none is mentioned or the name is not on the list, set the intent to 'unknown' and use the 'message' field to ask for a valid professional name.
-*   **Dates**: Use the current date provided in the input. Never return a past date. Default to 09:00:00 if no time is specified.
+*   **Dates**: Use the current date provided in the input. Never return a past date. If no time is specified, set the time to `00:00:00` to represent the beginning of the day.
 *   **Null `datetime`**: Use `null` for `datetime` when the user asks about general availability without a specific time (e.g., "What's Kauan's next availability?").
 
 ### Examples:

@@ -62,43 +62,80 @@ export class BarberController {
             },
             cancel: async (intent, question) => {
                 this.logger.updateText(`Attempting to cancel appointment...`, true);
+                const appointments = await this.barberService.getAppointments();
 
-                if (!intent.datetime) {
+                if (!appointments.length) {
                     return this.generateMessage({
-                        message: "I need a date to find an appointment to cancel. Could you please provide one?"
+                        message: "You have no appointments to cancel."
                     }, question);
                 }
 
-                const appointments = await this.barberService.getAppointments();
+                // Case 1: No date provided at all.
+                if (!intent.datetime) {
+                    const now = new Date();
+                    const upcomingAppointments = appointments
+                        .filter(apt => new Date(apt.datetime) > now)
+                        .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+
+                    if (!upcomingAppointments.length) {
+                        return this.generateMessage({
+                            message: "You have no upcoming appointments to cancel."
+                        }, question);
+                    }
+                    const nextAppointment = upcomingAppointments[0];
+                    return this.generateMessage({
+                        message: `Your next appointment is with ${nextAppointment.professional.name} at ${new Date(nextAppointment.datetime).toLocaleTimeString()}. Would you like to cancel this one?`,
+                        suggestion: nextAppointment
+                    }, question);
+                }
+
+                // Date is provided from here on.
                 const intentDate = new Date(intent.datetime);
 
-                const matchingAppointments = appointments.filter(apt => {
+                let professionalAppointments = appointments;
+                if (intent.professionalId) {
+                    professionalAppointments = appointments.filter(apt => apt.professional.id === intent.professionalId);
+                }
+
+                let dayAppointments = professionalAppointments.filter(apt => {
                     const aptDate = new Date(apt.datetime);
-                    const professionalMatch = intent.professionalId ? apt.professional.id === intent.professionalId : true;
-                    const dateMatch = aptDate.getFullYear() === intentDate.getFullYear() &&
+                    return aptDate.getFullYear() === intentDate.getFullYear() &&
                         aptDate.getMonth() === intentDate.getMonth() &&
                         aptDate.getDate() === intentDate.getDate();
-
-                    // if time is also passed, try to match it
-                    if (intent.datetime.includes('T')) {
-                        return aptDate.getTime() === intentDate.getTime() && professionalMatch;
-                    }
-                    return dateMatch && professionalMatch;
                 });
 
-
-                if (matchingAppointments.length === 0) {
+                if (!dayAppointments.length) {
                     return this.generateMessage({
-                        message: "I couldn't find an appointment matching your request. Please check the details and try again."
+                        message: "I couldn't find any appointments for that day."
                     }, question);
                 }
 
-                const appointmentToCancel = matchingAppointments[0];
-                return this.generateMessage({
-                    message: `I found an appointment for ${appointmentToCancel.professional.name} at ${new Date(appointmentToCancel.datetime).toLocaleTimeString()}. Would you like to cancel this one?`,
-                    suggestion: appointmentToCancel
-                }, question);
+                // If time is specified, try to find an exact match.
+                const hasTime = intentDate.getHours() !== 0 || intentDate.getMinutes() !== 0 || intentDate.getSeconds() !== 0;
+                if (hasTime) {
+                    const exactMatch = dayAppointments.find(apt => new Date(apt.datetime).getTime() === intentDate.getTime());
+                    if (exactMatch) {
+                        try {
+                            await this.barberService.cancelAppointment(exactMatch.id);
+                            return this.generateMessage({
+                                message: `Your appointment with ${exactMatch.professional.name} at ${intentDate.toLocaleTimeString()} has been canceled.`
+                            }, question);
+                        } catch (error) {
+                            return this.generateMessage({
+                                message: `I'm sorry, I encountered an error while trying to cancel the appointment. Please try again.`,
+                                error: error.message
+                            }, question);
+                        }
+                    }
+                }
 
+                // If no exact time match or no time was given, suggest the next appointment on that day.
+                const nextAppointmentOnDay = dayAppointments.sort((a, b) => new Date(a.datetime) - new Date(b.datetime))[0];
+
+                return this.generateMessage({
+                    message: `I found an appointment for ${nextAppointmentOnDay.professional.name} at ${new Date(nextAppointmentOnDay.datetime).toLocaleTimeString()}. Would you like to cancel this one?`,
+                    suggestion: nextAppointmentOnDay
+                }, question);
             },
             giveup: async (intent, question) => {
                 this.logger.updateText(`giving up...`, true);
