@@ -167,12 +167,16 @@ export class BarberController {
             information: async (intent, question) => {
                 this.logger.updateText(`providing information...`, true);
                 console.log('information', intent);
-                return 'ok';
+                return this.generateMessage({
+                    message: intent.message
+                }, question);
             },
             unknown: async (intent, question) => {
                 this.logger.updateText(`unknown`, true);
                 console.log('unknown', intent);
-                return 'ok';
+                return this.generateMessage({
+                    message: intent.message
+                }, question);
             },
             change: 'change'
         };

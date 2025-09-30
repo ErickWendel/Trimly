@@ -70,6 +70,10 @@ async function initializeApp() {
         console.log('schedule', event.detail.intent);
         reloadAgenda(barberService, agendaElement, speechManager)
     })
+    window.addEventListener('INTENT-cancel', (event) => {
+        console.log('cancel', event.detail.intent);
+        reloadAgenda(barberService, agendaElement, speechManager)
+    })
     // runTestScenarios(barberController)
 }
 
@@ -108,7 +112,7 @@ function runTestScenarios() {
         // 'will Kuan be available tomorrow at 2pm?',
         // 'what services can you offer?',
         // 'what professionals are available?',
-        // 'can you cancel my appointment with Kauan today at 2pm?',
+        // 'can you cancel the appointment I have with Luciano for tomorrow 5pm?',
         // 'can you cancel my appointment with Luciano on September 30th at 9am?',
         // 'what time is my appointment with Luciano on September 30th?'
     ];
